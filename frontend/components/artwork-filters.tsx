@@ -28,10 +28,11 @@ export function ArtworkFilters({
         {/* Period Filter */}
         <div className="mb-6">
           <h4 className="text-sm font-medium text-foreground mb-3">Period</h4>
-          <div className="space-y-2">
+          <div className="flex flex-wrap gap-2">
             <Button
               variant={selectedPeriod === null ? "default" : "outline"}
-              className="w-full justify-start text-sm"
+              size="sm"
+              className="rounded-full px-3 py-1 text-sm"
               onClick={() => onPeriodChange(null)}
             >
               All Periods
@@ -40,7 +41,8 @@ export function ArtworkFilters({
               <Button
                 key={period}
                 variant={selectedPeriod === period ? "default" : "outline"}
-                className="w-full justify-start text-sm"
+                size="sm"
+                className="rounded-full px-3 py-1 text-sm"
                 onClick={() => onPeriodChange(selectedPeriod === period ? null : period)}
               >
                 {period}
@@ -52,10 +54,11 @@ export function ArtworkFilters({
         {/* Medium Filter */}
         <div>
           <h4 className="text-sm font-medium text-foreground mb-3">Medium</h4>
-          <div className="space-y-2">
+          <div className="flex flex-wrap gap-2">
             <Button
               variant={selectedMedium === null ? "default" : "outline"}
-              className="w-full justify-start text-sm"
+              size="sm"
+              className="rounded-full px-3 py-1 text-sm"
               onClick={() => onMediumChange(null)}
             >
               All Mediums
@@ -64,7 +67,8 @@ export function ArtworkFilters({
               <Button
                 key={medium}
                 variant={selectedMedium === medium ? "default" : "outline"}
-                className="w-full justify-start text-sm"
+                size="sm"
+                className="rounded-full px-3 py-1 text-sm"
                 onClick={() => onMediumChange(selectedMedium === medium ? null : medium)}
               >
                 {medium}

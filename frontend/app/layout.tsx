@@ -11,7 +11,7 @@ const _lora = Lora({ subsets: ["latin"], weight: ["400", "500", "600", "700"] })
 const _geistMono = Geist_Mono({ subsets: ["latin"] })
 
 export const metadata: Metadata = {
-  title: "ArtVerse - Museum Companion",
+  title: "RealMeta - Museum Companion",
   description: "Discover artworks with audio guides, interactive content, and personalized recommendations",
   generator: "v0.app",
 }

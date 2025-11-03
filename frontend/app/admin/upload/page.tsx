@@ -61,9 +61,19 @@ export default function UploadArtworkPage() {
       if (audio) formData.append("audio", audio)
       if (video) formData.append("video", video)
 
+      // Get admin token from localStorage
+      const token = typeof window !== 'undefined' ? localStorage.getItem('admin-token') : null
+      
+      if (!token) {
+        throw new Error("Admin token not found. Please log in again.")
+      }
+
       // Send to backend
       const response = await fetch("/api/admin/artwork-upload", {
         method: "POST",
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
         body: formData,
       })
 

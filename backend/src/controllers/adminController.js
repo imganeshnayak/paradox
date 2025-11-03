@@ -4,6 +4,7 @@ const bcryptjs = require('bcryptjs');
 const { ObjectId } = require('mongodb');
 const { getDatabase } = require('../config/database');
 const config = require('../config/env');
+const { generateQRCode } = require('../utils/qrGenerator');
 
 class AdminController {
   /**
@@ -95,10 +96,155 @@ class AdminController {
       };
 
       const result = await db.collection('artworks').insertOne(artwork);
+      
+      // Auto-generate QR code for the artwork
+      try {
+        const qrCodeUrl = await generateQRCode(result.insertedId.toString());
+        
+        // Update artwork with QR code URL
+        await db.collection('artworks').findOneAndUpdate(
+          { _id: result.insertedId },
+          { $set: { qrCode: { url: qrCodeUrl, generatedAt: new Date() } } },
+          { returnDocument: 'after' }
+        );
+        
+        console.log(`✅ QR Code auto-generated for artwork ${result.insertedId}`);
+      } catch (qrError) {
+        console.warn(`⚠️ QR Code generation failed for artwork ${result.insertedId}:`, qrError.message);
+        // Don't fail the upload if QR generation fails
+      }
+      
       res.status(201).json({ message: 'Artwork uploaded', artworkId: result.insertedId, artwork });
     } catch (error) {
       console.error('Artwork upload error:', error);
-      res.status(500).json({ error: 'Artwork upload failed', details: error.message });
+      res.status(500).json({ error: 'Export report failed' });
+    }
+  }
+
+  async generateBulkQRCodes(req, res) {
+    try {
+      const db = getDatabase();
+      
+      // Get all artworks
+      const artworks = await db.collection('artworks').find({}).toArray();
+      
+      if (artworks.length === 0) {
+        return res.status(404).json({ error: 'No artworks found' });
+      }
+
+      console.log(`📊 Starting bulk QR generation for ${artworks.length} artworks...`);
+      
+      let successCount = 0;
+      let failedCount = 0;
+      const results = [];
+
+      for (const artwork of artworks) {
+        try {
+          const qrUrl = await generateQRCode(artwork._id.toString());
+          
+          // Update artwork with QR code
+          await db.collection('artworks').findOneAndUpdate(
+            { _id: artwork._id },
+            { $set: { qrCode: { url: qrUrl, generatedAt: new Date() } } },
+            { returnDocument: 'after' }
+          );
+          
+          successCount++;
+          results.push({
+            artworkId: artwork._id.toString(),
+            title: artwork.title,
+            status: 'success'
+          });
+        } catch (error) {
+          failedCount++;
+          results.push({
+            artworkId: artwork._id.toString(),
+            title: artwork.title,
+            status: 'failed',
+            error: error.message
+          });
+        }
+      }
+
+      res.json({
+        message: 'Bulk QR generation complete',
+        summary: {
+          total: artworks.length,
+          success: successCount,
+          failed: failedCount
+        },
+        results: results
+      });
+    } catch (error) {
+      console.error('Bulk QR generation error:', error);
+      res.status(500).json({ error: 'Bulk QR generation failed', details: error.message });
+    }
+  }
+
+  async regenerateQRCode(req, res) {
+    try {
+      const { artworkId } = req.params;
+      const db = getDatabase();
+      
+      if (!ObjectId.isValid(artworkId)) {
+        return res.status(400).json({ error: 'Invalid artwork ID' });
+      }
+
+      const artwork = await db.collection('artworks').findOne({ _id: new ObjectId(artworkId) });
+      
+      if (!artwork) {
+        return res.status(404).json({ error: 'Artwork not found' });
+      }
+
+      // Generate new QR code
+      const qrUrl = await generateQRCode(artworkId);
+      
+      // Update artwork
+      const result = await db.collection('artworks').findOneAndUpdate(
+        { _id: new ObjectId(artworkId) },
+        { $set: { qrCode: { url: qrUrl, generatedAt: new Date() } } },
+        { returnDocument: 'after' }
+      );
+
+      res.json({
+        message: 'QR code regenerated',
+        artworkId: artwork._id,
+        title: artwork.title,
+        qrCode: result.value.qrCode
+      });
+    } catch (error) {
+      console.error('Regenerate QR code error:', error);
+      res.status(500).json({ error: 'QR code regeneration failed', details: error.message });
+    }
+  }
+
+  async getQRCode(req, res) {
+    try {
+      const { artworkId } = req.params;
+      const db = getDatabase();
+
+      if (!ObjectId.isValid(artworkId)) {
+        return res.status(400).json({ error: 'Invalid artwork ID' });
+      }
+
+      const artwork = await db.collection('artworks').findOne({ _id: new ObjectId(artworkId) });
+      
+      if (!artwork) {
+        return res.status(404).json({ error: 'Artwork not found' });
+      }
+
+      if (!artwork.qrCode || !artwork.qrCode.url) {
+        return res.status(404).json({ error: 'QR code not generated for this artwork' });
+      }
+
+      res.json({
+        artworkId: artwork._id,
+        title: artwork.title,
+        qrCode: artwork.qrCode
+      });
+    } catch (error) {
+      console.error('Get QR code error:', error);
+      res.status(500).json({ error: 'Failed to retrieve QR code', details: error.message });
     }
   }
 

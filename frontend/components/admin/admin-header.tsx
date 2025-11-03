@@ -1,14 +1,15 @@
 "use client"
 
 import { Button } from "@/components/ui/button"
-import { BarChart3, Settings } from "lucide-react"
+import { BarChart3, Settings, Plus } from "lucide-react"
 
 interface AdminHeaderProps {
   timeRange: string
   onTimeRangeChange: (range: string) => void
+  onUploadClick?: () => void
 }
 
-export function AdminHeader({ timeRange, onTimeRangeChange }: AdminHeaderProps) {
+export function AdminHeader({ timeRange, onTimeRangeChange, onUploadClick }: AdminHeaderProps) {
   const timeRanges = [
     { value: "day", label: "Today" },
     { value: "week", label: "This Week" },
@@ -42,6 +43,15 @@ export function AdminHeader({ timeRange, onTimeRangeChange }: AdminHeaderProps) 
                 {range.label}
               </Button>
             ))}
+            <Button 
+              variant="outline" 
+              size="sm"
+              onClick={onUploadClick}
+              className="gap-2"
+            >
+              <Plus size={16} />
+              Upload
+            </Button>
             <Button variant="outline" size="sm">
               <Settings size={16} />
             </Button>

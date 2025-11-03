@@ -6,6 +6,15 @@ import { Footer } from "@/components/footer"
 import { ArtworkGrid } from "@/components/artwork-grid"
 import { ArtworkFilters } from "@/components/artwork-filters"
 import { SearchBar } from "@/components/search-bar"
+import { Button } from "@/components/ui/button"
+import {
+  Sheet,
+  SheetTrigger,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetClose,
+} from "@/components/ui/sheet"
 
 // Mock artwork data
 const mockArtworks = [
@@ -115,8 +124,8 @@ export default function ExplorePage() {
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
-            {/* Filters */}
-            <div className="lg:col-span-1">
+            {/* Filters - hidden on small screens (moved into a Sheet) */}
+            <div className="hidden lg:block lg:col-span-1">
               <ArtworkFilters
                 periods={periods}
                 mediums={mediums}
@@ -129,7 +138,48 @@ export default function ExplorePage() {
 
             {/* Main Content */}
             <div className="lg:col-span-3">
-              <SearchBar query={searchQuery} onQueryChange={setSearchQuery} resultCount={filteredArtworks.length} />
+              {/* Mobile: Search + Filters button */}
+              <div className="flex items-start gap-3 mb-6">
+                <div className="flex-1">
+                  <SearchBar query={searchQuery} onQueryChange={setSearchQuery} resultCount={filteredArtworks.length} />
+                </div>
+
+                {/* Filters sheet trigger (visible only on small screens) */}
+                <div className="lg:hidden mt-2">
+                  <Sheet>
+                    <SheetTrigger asChild>
+                      <Button variant="outline" className="h-10 px-3">
+                        Filters
+                      </Button>
+                    </SheetTrigger>
+                    <SheetContent side="left">
+                      <SheetHeader>
+                        <SheetTitle>Filters</SheetTitle>
+                      </SheetHeader>
+                      <div className="p-4">
+                        <ArtworkFilters
+                          periods={periods}
+                          mediums={mediums}
+                          selectedPeriod={selectedPeriod}
+                          selectedMedium={selectedMedium}
+                          onPeriodChange={(p) => {
+                            setSelectedPeriod(p)
+                          }}
+                          onMediumChange={(m) => {
+                            setSelectedMedium(m)
+                          }}
+                        />
+                      </div>
+                      <SheetClose asChild>
+                        <Button variant="ghost" className="m-4">
+                          Close
+                        </Button>
+                      </SheetClose>
+                    </SheetContent>
+                  </Sheet>
+                </div>
+              </div>
+
               <ArtworkGrid artworks={filteredArtworks} />
             </div>
           </div>

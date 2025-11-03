@@ -9,6 +9,7 @@ async function seedArtworks() {
       title: 'The Starry Night',
       artist: 'Vincent van Gogh',
       yearCreated: 1889,
+      type: 'painting',
       description: 'A swirling night sky over a small French village. One of the most recognizable paintings in art history.',
       medium: 'Oil on canvas',
       dimensions: '73.7 cm × 92.1 cm',
@@ -16,11 +17,7 @@ async function seedArtworks() {
         url: 'https://res.cloudinary.com/dahotkqpi/image/upload/v1/starry-night.jpg',
         cloudinaryId: 'starry-night'
       },
-      model3D: {
-        url: 'https://res.cloudinary.com/dahotkqpi/raw/upload/v1/starry-night-model.glb',
-        cloudinaryId: 'starry-night-model',
-        format: 'glb'
-      },
+      model3D: null,
       audioGuide: {
         url: 'https://res.cloudinary.com/dahotkqpi/video/upload/v1/starry-night-audio.m4a',
         transcription: 'This painting depicts a night scene with a crescent moon and stars...',
@@ -41,6 +38,7 @@ async function seedArtworks() {
       title: 'Irises',
       artist: 'Vincent van Gogh',
       yearCreated: 1890,
+      type: 'painting',
       description: 'A vibrant painting of purple irises. Created during van Gogh\'s stay in Saint-Paul-de-Mausole asylum.',
       medium: 'Oil on canvas',
       dimensions: '71 cm × 93 cm',
@@ -48,11 +46,7 @@ async function seedArtworks() {
         url: 'https://res.cloudinary.com/dahotkqpi/image/upload/v1/irises.jpg',
         cloudinaryId: 'irises'
       },
-      model3D: {
-        url: 'https://res.cloudinary.com/dahotkqpi/raw/upload/v1/irises-model.glb',
-        cloudinaryId: 'irises-model',
-        format: 'glb'
-      },
+      model3D: null,
       audioGuide: {
         url: 'https://res.cloudinary.com/dahotkqpi/video/upload/v1/irises-audio.m4a',
         transcription: 'Van Gogh\'s use of color in this painting is extraordinary...',
@@ -73,6 +67,7 @@ async function seedArtworks() {
       title: 'Sunflowers',
       artist: 'Vincent van Gogh',
       yearCreated: 1888,
+      type: 'painting',
       description: 'A series of still life paintings depicting sunflowers in a vase. A symbol of joy and hope.',
       medium: 'Oil on canvas',
       dimensions: '92 cm × 73 cm',
@@ -80,11 +75,7 @@ async function seedArtworks() {
         url: 'https://res.cloudinary.com/dahotkqpi/image/upload/v1/sunflowers.jpg',
         cloudinaryId: 'sunflowers'
       },
-      model3D: {
-        url: 'https://res.cloudinary.com/dahotkqpi/raw/upload/v1/sunflowers-model.glb',
-        cloudinaryId: 'sunflowers-model',
-        format: 'glb'
-      },
+      model3D: null,
       audioGuide: {
         url: 'https://res.cloudinary.com/dahotkqpi/video/upload/v1/sunflowers-audio.m4a',
         transcription: 'These sunflowers represent gratitude and loyalty in the language of flowers...',
@@ -105,6 +96,7 @@ async function seedArtworks() {
       title: 'The Persistence of Memory',
       artist: 'Salvador Dalí',
       yearCreated: 1931,
+      type: 'painting',
       description: 'Surrealist masterpiece featuring melting clocks. Questions the nature of time itself.',
       medium: 'Oil on canvas',
       dimensions: '24 cm × 33 cm',
@@ -112,11 +104,7 @@ async function seedArtworks() {
         url: 'https://res.cloudinary.com/dahotkqpi/image/upload/v1/persistence-memory.jpg',
         cloudinaryId: 'persistence-memory'
       },
-      model3D: {
-        url: 'https://res.cloudinary.com/dahotkqpi/raw/upload/v1/persistence-model.glb',
-        cloudinaryId: 'persistence-model',
-        format: 'glb'
-      },
+      model3D: null,
       audioGuide: {
         url: 'https://res.cloudinary.com/dahotkqpi/video/upload/v1/persistence-audio.m4a',
         transcription: 'Dalí\'s exploration of time, dreams, and the subconscious mind...',

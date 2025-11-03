@@ -6,7 +6,7 @@ module.exports = {
   
   mongodb: {
     uri: process.env.MONGODB_URI,
-    dbName: process.env.DATABASE_NAME || 'realmeta'
+    dbName: process.env.DATABASE_NAME || 'ArtVerse'
   },
   
   cloudinary: {

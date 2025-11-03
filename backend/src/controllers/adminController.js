@@ -8,14 +8,26 @@ class AdminController {
   /**
    * Upload new artwork (metadata, images, 3D, audio, video)
    * Expects multipart/form-data with fields:
-   * - title, artist, year, description, tags
+   * - title, artist, year, description, tags, type
    * - images (multiple files), model3d (file), audio (file), video (file)
+   * Note: 3D models are only allowed for 'sculpture' type artworks
    */
   async uploadArtwork(req, res) {
     try {
       const db = getDatabase();
       const body = req.body;
       const files = req.files || {};
+
+      // Validate artwork type
+      const validTypes = ['painting', 'sculpture', 'drawing', 'installation', 'other'];
+      if (!body.type || !validTypes.includes(body.type.toLowerCase())) {
+        return res.status(400).json({ error: 'Invalid artwork type. Must be one of: ' + validTypes.join(', ') });
+      }
+
+      // Validate: 3D models only for sculptures
+      if (files.model3d && files.model3d[0] && body.type.toLowerCase() !== 'sculpture') {
+        return res.status(400).json({ error: '3D models can only be uploaded for sculptures. This artwork is a ' + body.type });
+      }
 
       // Upload files to Cloudinary
       let images = [], model3d = null, audio = null, video = null;
@@ -32,7 +44,7 @@ class AdminController {
         }
       }
 
-      // Handle 3D model
+      // Handle 3D model (only for sculptures)
       if (files.model3d && files.model3d[0]) {
         const model = files.model3d[0];
         model3d = await new Promise((resolve, reject) => {
@@ -71,6 +83,7 @@ class AdminController {
         artist: body.artist,
         yearCreated: parseInt(body.year) || new Date().getFullYear(),
         description: body.description,
+        type: body.type.toLowerCase(),
         tags: body.tags ? body.tags.split(',').map(t => t.trim()).filter(t => t) : [],
         images: images.length > 0 ? images : null,
         model3d: model3d,

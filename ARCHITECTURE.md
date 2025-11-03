@@ -1,4 +1,4 @@
-# RealMeta Architecture Diagram & System Overview
+# ArtVerse Architecture Diagram & System Overview
 
 ## System Architecture
 

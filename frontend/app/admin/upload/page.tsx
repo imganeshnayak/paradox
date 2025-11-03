@@ -38,6 +38,7 @@ export default function UploadArtworkPage() {
   const [year, setYear] = useState("")
   const [description, setDescription] = useState("")
   const [tags, setTags] = useState("")
+  const [type, setType] = useState("painting")
 
   // Files
   const [images, setImages] = useState<FileList | null>(null)
@@ -68,6 +69,7 @@ export default function UploadArtworkPage() {
       formData.append("year", year)
       formData.append("description", description)
       formData.append("tags", tags)
+      formData.append("type", type)
 
       // Add images
       Array.from(images).forEach((file) => {
@@ -127,6 +129,7 @@ export default function UploadArtworkPage() {
     setYear("")
     setDescription("")
     setTags("")
+    setType("painting")
     setImages(null)
     setModel3d(null)
     setAudio(null)
@@ -215,14 +218,19 @@ export default function UploadArtworkPage() {
                     />
                   </div>
                   <div className="space-y-2">
-                    <label className="block text-sm font-semibold">Tags</label>
-                    <Input
-                      placeholder="e.g., painting, impressionism, night"
-                      value={tags}
-                      onChange={(e) => setTags(e.target.value)}
+                    <label className="block text-sm font-semibold">Artwork Type *</label>
+                    <select
+                      value={type}
+                      onChange={(e) => setType(e.target.value)}
                       disabled={loading}
-                      className="h-11"
-                    />
+                      className="h-11 w-full px-3 border border-input rounded-md bg-background text-foreground"
+                    >
+                      <option value="painting">Painting</option>
+                      <option value="sculpture">Sculpture (3D Model Available)</option>
+                      <option value="drawing">Drawing</option>
+                      <option value="installation">Installation</option>
+                      <option value="other">Other</option>
+                    </select>
                   </div>
                 </div>
 
@@ -235,6 +243,17 @@ export default function UploadArtworkPage() {
                     rows={6}
                     disabled={loading}
                     className="resize-none"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <label className="block text-sm font-semibold">Tags</label>
+                  <Input
+                    placeholder="e.g., painting, impressionism, night"
+                    value={tags}
+                    onChange={(e) => setTags(e.target.value)}
+                    disabled={loading}
+                    className="h-11"
                   />
                 </div>
               </div>
@@ -293,19 +312,28 @@ export default function UploadArtworkPage() {
                 {/* 3D Model */}
                 <div className="space-y-3">
                   <div className="flex items-center gap-2">
-                    <Cuboid size={20} className="text-accent" />
-                    <label className="text-sm font-semibold">3D Model (Optional)</label>
+                    <Cuboid size={20} className={type === 'sculpture' ? 'text-accent' : 'text-foreground/30'} />
+                    <label className={`text-sm font-semibold ${type !== 'sculpture' ? 'text-foreground/50' : ''}`}>
+                      3D Model {type === 'sculpture' ? '(Optional)' : '(Sculptures Only)'}
+                    </label>
                   </div>
-                  <div className="border-2 border-dashed border-border rounded-lg p-6 hover:border-accent/50 transition">
+                  {type !== 'sculpture' && (
+                    <div className="bg-yellow-50 dark:bg-yellow-950 border border-yellow-200 dark:border-yellow-800 rounded-lg p-3">
+                      <p className="text-sm text-yellow-700 dark:text-yellow-300">
+                        ℹ️ 3D models are only available for sculpture artworks. Select "Sculpture" as the artwork type to enable this field.
+                      </p>
+                    </div>
+                  )}
+                  <div className={`border-2 border-dashed ${type === 'sculpture' ? 'border-border hover:border-accent/50' : 'border-foreground/20'} rounded-lg p-6 transition ${type !== 'sculpture' ? 'opacity-50 pointer-events-none' : ''}`}>
                     <input
                       type="file"
                       accept=".glb,.gltf"
                       onChange={(e) => setModel3d(e.target.files?.[0] || null)}
-                      disabled={loading}
+                      disabled={loading || type !== 'sculpture'}
                       className="hidden"
                       id="model-input"
                     />
-                    <label htmlFor="model-input" className="cursor-pointer block">
+                    <label htmlFor="model-input" className={`cursor-pointer block ${type !== 'sculpture' ? 'cursor-not-allowed' : ''}`}>
                       <div className="text-center">
                         <Cuboid size={32} className="mx-auto mb-2 text-foreground/40" />
                         <p className="text-sm font-medium">Click to select 3D model</p>

@@ -18,7 +18,7 @@ This creates `package.json`. Open it and update:
 
 ```json
 {
-  "name": "realmeta-backend",
+  "name": "ArtVerse-backend",
   "version": "1.0.0",
   "description": "Museum companion app backend with Express and MongoDB",
   "main": "server.js",
@@ -95,8 +95,8 @@ PORT=5000
 NODE_ENV=development
 
 # MongoDB
-MONGODB_URI=mongodb+srv://username:password@cluster.mongodb.net/realmeta?retryWrites=true&w=majority
-DATABASE_NAME=realmeta
+MONGODB_URI=mongodb+srv://username:password@cluster.mongodb.net/ArtVerse?retryWrites=true&w=majority
+DATABASE_NAME=ArtVerse
 
 # Cloudinary (for 3D models)
 CLOUDINARY_CLOUD_NAME=your_cloud_name
@@ -129,7 +129,7 @@ module.exports = {
   
   mongodb: {
     uri: process.env.MONGODB_URI,
-    dbName: process.env.DATABASE_NAME || 'realmeta'
+    dbName: process.env.DATABASE_NAME || 'ArtVerse'
   },
   
   cloudinary: {
@@ -373,7 +373,7 @@ Server will start on `http://localhost:5000` and auto-reload on file changes.
 ### Option 2: Local MongoDB
 1. Download from https://www.mongodb.com/try/download/community
 2. Install and start MongoDB service
-3. Use `mongodb://localhost:27017/realmeta` as MONGODB_URI
+3. Use `mongodb://localhost:27017/ArtVerse` as MONGODB_URI
 
 ### Cloudinary Setup
 1. Sign up at https://cloudinary.com

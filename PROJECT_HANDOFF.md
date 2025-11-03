@@ -1,8 +1,8 @@
-# RealMeta Project - Complete Handoff Document
+# ArtVerse Project - Complete Handoff Document
 
 ## 🎯 Project Overview
 
-**RealMeta** is a no-login, privacy-first museum companion web application. Visitors scan QR codes to discover artworks, get audio guides, view 3D models, and the museum receives anonymous analytics about visitor behavior.
+**ArtVerse** is a no-login, privacy-first museum companion web application. Visitors scan QR codes to discover artworks, get audio guides, view 3D models, and the museum receives anonymous analytics about visitor behavior.
 
 ### Key Features
 - ✅ Anonymous visitor sessions (no login required)

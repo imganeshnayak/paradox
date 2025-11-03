@@ -11,9 +11,17 @@ export function InstantFeedbackSystem() {
   const [submitted, setSubmitted] = useState(false)
 
   useEffect(() => {
+    // Check if feedback was already shown in this session
+    const feedbackShown = sessionStorage.getItem('feedbackShown')
+    
+    if (feedbackShown) {
+      return
+    }
+
     // Show feedback prompt after 30 seconds (simulating leaving the museum)
     const timer = setTimeout(() => {
       setIsVisible(true)
+      sessionStorage.setItem('feedbackShown', 'true')
     }, 30000)
 
     return () => clearTimeout(timer)
@@ -69,7 +77,10 @@ export function InstantFeedbackSystem() {
             >
               <Frown size={16} className="text-blue-500" />
             </Button>
-            <Button onClick={() => setIsVisible(false)} variant="ghost" size="sm">
+            <Button onClick={() => {
+              sessionStorage.setItem('feedbackShown', 'true')
+              setIsVisible(false)
+            }} variant="ghost" size="sm">
               Skip
             </Button>
           </div>

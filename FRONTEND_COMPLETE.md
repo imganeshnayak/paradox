@@ -1,4 +1,4 @@
-# RealMeta Museum App - Frontend Complete ✅
+# ArtVerse Museum App - Frontend Complete ✅
 
 ## Project Summary
 A comprehensive no-login museum companion web application built with Next.js 16, featuring anonymous visitor tracking, artwork discovery via QR scanning, rich media content delivery, and offline support.

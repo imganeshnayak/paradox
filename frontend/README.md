@@ -348,7 +348,7 @@ npm run test       # Run Jest tests
 ### Issue: Offline mode not working
 - Verify Service Worker installed
 - Check Application tab → Cache Storage
-- Look for "realmeta" cache
+- Look for "ArtVerse" cache
 
 ### Issue: Consent banner not showing
 - Clear localStorage for this site

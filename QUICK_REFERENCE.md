@@ -1,6 +1,6 @@
-# Quick Reference Guide - RealMeta Project
+# Quick Reference Guide - ArtVerse Project
 
-## 🎯 What is RealMeta?
+## 🎯 What is ArtVerse?
 
 A museum companion app where visitors:
 1. Scan QR codes to discover artworks

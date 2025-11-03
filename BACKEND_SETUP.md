@@ -1,4 +1,4 @@
-# RealMeta Backend Setup Guide
+# ArtVerse Backend Setup Guide
 
 ## Overview
 The backend uses Express.js with MongoDB and Node.js to handle:
@@ -75,8 +75,8 @@ PORT=5000
 NODE_ENV=development
 
 # MongoDB
-MONGODB_URI=mongodb+srv://username:password@cluster.mongodb.net/realmeta
-DATABASE_NAME=realmeta
+MONGODB_URI=mongodb+srv://username:password@cluster.mongodb.net/ArtVerse
+DATABASE_NAME=ArtVerse
 
 # Cloudinary
 CLOUDINARY_CLOUD_NAME=your_cloud_name
@@ -289,7 +289,7 @@ cloudinary.config({
 async function upload3DModel(filePath, artworkId) {
   const result = await cloudinary.uploader.upload(filePath, {
     resource_type: 'raw',
-    folder: 'realmeta/3d-models',
+    folder: 'ArtVerse/3d-models',
     public_id: `artwork-${artworkId}`,
     format: 'glb' // or your preferred format
   });
@@ -383,7 +383,7 @@ npm run seed
 ### Cloudinary Setup
 1. Sign up at cloudinary.com
 2. Copy API credentials to `.env`
-3. Create folder: `realmeta/3d-models`
+3. Create folder: `ArtVerse/3d-models`
 
 ### Environment Deployment
 ```bash

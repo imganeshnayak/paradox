@@ -4,8 +4,8 @@ import { useState, useMemo, useEffect } from "react"
 import { Navbar } from "@/components/navbar"
 import { Footer } from "@/components/footer"
 import { ArtworkGrid } from "@/components/artwork-grid"
-import { ArtworkFilters } from "@/components/artwork-filters"
 import { SearchBar } from "@/components/search-bar"
+import { Button } from "@/components/ui/button"
 
 interface Artwork {
   _id: string
@@ -92,21 +92,68 @@ export default function ExplorePage() {
             </div>
           ) : (
             <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
-              {/* Filters */}
-              <div className="lg:col-span-1">
-                <ArtworkFilters
-                  periods={periods as string[]}
-                  mediums={mediums as string[]}
-                  selectedPeriod={selectedPeriod}
-                  selectedMedium={selectedMedium}
-                  onPeriodChange={setSelectedPeriod}
-                  onMediumChange={setSelectedMedium}
-                />
+              {/* Sidebar Filters - Hidden on mobile, visible on lg screens */}
+              <div className="hidden lg:block lg:col-span-1">
+                <div className="sticky top-20 space-y-6">
+                  {/* Period Filters */}
+                  <div>
+                    <h3 className="font-semibold text-foreground mb-3">Period</h3>
+                    <div className="space-y-2 flex flex-wrap gap-2">
+                      <Button
+                        variant={selectedPeriod === null ? "default" : "outline"}
+                        size="sm"
+                        onClick={() => setSelectedPeriod(null)}
+                        className="rounded-full text-xs"
+                      >
+                        All Periods
+                      </Button>
+                      {(periods as string[]).map((period) => (
+                        <Button
+                          key={period}
+                          variant={selectedPeriod === period ? "default" : "outline"}
+                          size="sm"
+                          onClick={() => setSelectedPeriod(selectedPeriod === period ? null : period)}
+                          className="rounded-full text-xs"
+                        >
+                          {period}
+                        </Button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Medium Filters */}
+                  <div>
+                    <h3 className="font-semibold text-foreground mb-3">Medium</h3>
+                    <div className="space-y-2 flex flex-wrap gap-2">
+                      <Button
+                        variant={selectedMedium === null ? "default" : "outline"}
+                        size="sm"
+                        onClick={() => setSelectedMedium(null)}
+                        className="rounded-full text-xs"
+                      >
+                        All Mediums
+                      </Button>
+                      {(mediums as string[]).map((medium) => (
+                        <Button
+                          key={medium}
+                          variant={selectedMedium === medium ? "default" : "outline"}
+                          size="sm"
+                          onClick={() => setSelectedMedium(selectedMedium === medium ? null : medium)}
+                          className="rounded-full text-xs"
+                        >
+                          {medium}
+                        </Button>
+                      ))}
+                    </div>
+                  </div>
+                </div>
               </div>
 
               {/* Main Content */}
               <div className="lg:col-span-3">
-                <SearchBar query={searchQuery} onQueryChange={setSearchQuery} resultCount={filteredArtworks.length} />
+                <div className="mb-6">
+                  <SearchBar query={searchQuery} onQueryChange={setSearchQuery} resultCount={filteredArtworks.length} />
+                </div>
                 <ArtworkGrid artworks={gridArtworks} />
               </div>
             </div>

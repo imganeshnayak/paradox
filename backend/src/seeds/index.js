@@ -11,6 +11,7 @@ async function seedArtworks() {
       yearCreated: 1889,
       type: 'painting',
       description: 'A swirling night sky over a small French village. One of the most recognizable paintings in art history.',
+      story: 'Painted during van Gogh\'s stay at Saint-Rémy-de-Provence, "The Starry Night" emerged from the artist\'s imagination rather than direct observation. Van Gogh was fascinated by the night sky and created this work while recovering from mental illness. The painting captures his turbulent emotional state through the dynamic, swirling brushstrokes and the contrast between the peaceful village below and the chaotic heavens above. The bright crescent moon and the glowing stars suggest hope and spiritual contemplation.',
       medium: 'Oil on canvas',
       dimensions: '73.7 cm × 92.1 cm',
       image: {
@@ -40,6 +41,7 @@ async function seedArtworks() {
       yearCreated: 1890,
       type: 'painting',
       description: 'A vibrant painting of purple irises. Created during van Gogh\'s stay in Saint-Paul-de-Mausole asylum.',
+      story: 'Van Gogh painted "Irises" while staying at Saint-Paul-de-Mausole psychiatric hospital in Saint-Rémy-de-Provence. During this tumultuous period of his life, van Gogh found solace in painting nature. The irises in the garden became his muse. The composition shows a masterful use of color contrast - the vibrant purples and blues of the flowers set against the softer greens and yellows of the background. This painting demonstrates van Gogh\'s ability to find beauty and meaning even during his darkest moments.',
       medium: 'Oil on canvas',
       dimensions: '71 cm × 93 cm',
       image: {
@@ -69,6 +71,7 @@ async function seedArtworks() {
       yearCreated: 1888,
       type: 'painting',
       description: 'A series of still life paintings depicting sunflowers in a vase. A symbol of joy and hope.',
+      story: 'Van Gogh\'s sunflower paintings represent a pivotal moment in his artistic journey. He created several variations of this subject while living in Arles, France, where he hoped to establish an artist\'s community. For van Gogh, sunflowers symbolized gratitude, loyalty, and longevity. He used thick, expressive brushstrokes and a vibrant color palette - yellows, greens, and browns - to convey the vitality and warmth of the flowers. These paintings were intended as decorations for his friend Paul Gauguin\'s room, reflecting van Gogh\'s deep desire for human connection and friendship.',
       medium: 'Oil on canvas',
       dimensions: '92 cm × 73 cm',
       image: {
@@ -98,6 +101,7 @@ async function seedArtworks() {
       yearCreated: 1931,
       type: 'painting',
       description: 'Surrealist masterpiece featuring melting clocks. Questions the nature of time itself.',
+      story: 'Salvador Dalí\'s "The Persistence of Memory" is one of the most iconic surrealist paintings ever created. Painted in 1931, it presents a dreamlike landscape where time itself becomes malleable. The melting clocks - what Dalí called "soft watches" - defy the rigid concept of time as we know it. In the painting, a fleshy figure lies sleeping on a golden landscape, with one soft watch draped over it and another hanging from a barren tree. A third clock sits on a cube. A fly crawls over the center watch, and ants swarm over a pocket watch. Dalí\'s intention was to challenge our perception of reality and show that time is subjective, especially in dreams and the unconscious mind.',
       medium: 'Oil on canvas',
       dimensions: '24 cm × 33 cm',
       image: {

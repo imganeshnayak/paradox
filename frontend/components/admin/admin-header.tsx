@@ -1,7 +1,8 @@
 "use client"
 
 import { Button } from "@/components/ui/button"
-import { BarChart3, Settings, Plus } from "lucide-react"
+import { useRouter } from "next/navigation"
+import { BarChart3, Settings, Plus, FileText } from "lucide-react"
 
 interface AdminHeaderProps {
   timeRange: string
@@ -10,6 +11,7 @@ interface AdminHeaderProps {
 }
 
 export function AdminHeader({ timeRange, onTimeRangeChange, onUploadClick }: AdminHeaderProps) {
+  const router = useRouter()
   const timeRanges = [
     { value: "day", label: "Today" },
     { value: "week", label: "This Week" },
@@ -43,6 +45,15 @@ export function AdminHeader({ timeRange, onTimeRangeChange, onUploadClick }: Adm
                 {range.label}
               </Button>
             ))}
+            <Button 
+              variant="outline" 
+              size="sm"
+              onClick={() => router.push("/admin/content")}
+              className="gap-2"
+            >
+              <FileText size={16} />
+              Content
+            </Button>
             <Button 
               variant="outline" 
               size="sm"

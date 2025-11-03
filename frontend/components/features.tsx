@@ -1,25 +1,25 @@
-import { Smartphone, Headphones, Sparkles, Map } from "lucide-react"
+import { Smartphone, Map, Clock, BarChart3 } from "lucide-react"
 
 const features = [
   {
     icon: Smartphone,
-    title: "Instant Access",
-    description: "Scan QR codes to instantly view artwork details, high-resolution images, and interactive content.",
-  },
-  {
-    icon: Headphones,
-    title: "Audio Guides",
-    description: "Listen to expert narrations about artwork history, techniques, and cultural significance.",
-  },
-  {
-    icon: Sparkles,
-    title: "Smart Recommendations",
-    description: "Receive personalized artwork suggestions based on your interests and exploration patterns.",
+    title: "Scan Artwork",
+    description: "Point your device at any painting to instantly reveal its history, technique, and hidden stories.",
   },
   {
     icon: Map,
-    title: "Museum Navigation",
-    description: "Find your way around the museum with interactive maps and suggested routes.",
+    title: "Museum Map",
+    description: "Navigate through galleries and discover masterpieces waiting to be explored on every floor.",
+  },
+  {
+    icon: Clock,
+    title: "Your Journey",
+    description: "Revisit the artworks you've discovered and trace your path through art history.",
+  },
+  {
+    icon: BarChart3,
+    title: "Analytics",
+    description: "Explore visitor engagement patterns and discover which masterpieces captivate the most.",
   },
 ]
 
@@ -27,23 +27,19 @@ export function Features() {
   return (
     <section className="py-16 md:py-24 bg-background">
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-        <h2 className="text-3xl md:text-4xl font-serif font-bold text-foreground text-center mb-12">
-          Why Choose ArtVerse
-        </h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
           {features.map((feature, index) => {
             const Icon = feature.icon
             return (
-              <div key={index} className="flex gap-4">
-                <div className="flex-shrink-0">
-                  <div className="flex items-center justify-center h-12 w-12 rounded-md bg-primary text-primary-foreground">
-                    <Icon size={24} />
-                  </div>
+              <div 
+                key={index} 
+                className="flex flex-col items-center text-center p-8 rounded-lg border border-border bg-card hover:border-accent/50 hover:shadow-lg transition-all"
+              >
+                <div className="flex items-center justify-center h-16 w-16 rounded-lg bg-accent/10 text-accent mb-6">
+                  <Icon size={32} strokeWidth={1.5} />
                 </div>
-                <div>
-                  <h3 className="text-lg font-semibold text-foreground mb-2">{feature.title}</h3>
-                  <p className="text-foreground/70">{feature.description}</p>
-                </div>
+                <h3 className="text-2xl font-serif font-bold text-foreground mb-3">{feature.title}</h3>
+                <p className="text-foreground/70 leading-relaxed">{feature.description}</p>
               </div>
             )
           })}

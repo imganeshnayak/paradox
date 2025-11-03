@@ -1,0 +1,5 @@
+{
+  "model": "tiiuae/falcon-7b-instruct",
+  "inputs": "Hello!",
+  "parameters": { "max_new_tokens": 10 }
+}

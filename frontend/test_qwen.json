@@ -1,0 +1,13 @@
+{
+  "question": "What is the story behind this artwork?",
+  "artwork": {
+    "title": "Starry Night",
+    "artist": "Vincent van Gogh",
+    "year": 1889,
+    "description": "A swirling night sky over a quiet town.",
+    "story": "Van Gogh painted this masterpiece while in an asylum.",
+    "medium": "Oil on canvas",
+    "period": "Post-Impressionism"
+  },
+  "language": "en"
+}

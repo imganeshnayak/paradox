@@ -108,6 +108,25 @@ class ReviewController {
 
       const result = await db.collection('reviews').insertOne(review);
 
+      // Record review event in analytics
+      const analyticsEvent = {
+        artworkId,
+        sessionId,
+        eventType: 'review_submitted',
+        metadata: {
+          rating: parseInt(rating),
+          hasComment: !!comment,
+          commentLength: (comment || '').length,
+          timestamp: new Date()
+        },
+        timestamp: new Date(),
+        anonymousId: sessionId
+      };
+
+      await db.collection('analytics').insertOne(analyticsEvent);
+
+      console.log(`⭐ Review submitted (${rating} stars) for artwork ${artworkId} by session ${sessionId}`);
+
       res.status(201).json({
         message: 'Review submitted successfully',
         reviewId: result.insertedId,
@@ -155,6 +174,23 @@ class ReviewController {
         // Remove like
         await db.collection('likes').deleteOne({ _id: existingLike._id });
         
+        // Record unlike event in analytics
+        const analyticsEvent = {
+          artworkId,
+          sessionId,
+          eventType: 'like_removed',
+          metadata: {
+            timestamp: new Date(),
+            action: 'unlike'
+          },
+          timestamp: new Date(),
+          anonymousId: sessionId
+        };
+
+        await db.collection('analytics').insertOne(analyticsEvent);
+
+        console.log(`💔 Like removed for artwork ${artworkId} by session ${sessionId}`);
+        
         // Get updated count
         const likesCount = await db.collection('likes')
           .countDocuments({ artworkId });
@@ -173,6 +209,23 @@ class ReviewController {
         };
 
         await db.collection('likes').insertOne(like);
+
+        // Record like event in analytics
+        const analyticsEvent = {
+          artworkId,
+          sessionId,
+          eventType: 'like_added',
+          metadata: {
+            timestamp: new Date(),
+            action: 'like'
+          },
+          timestamp: new Date(),
+          anonymousId: sessionId
+        };
+
+        await db.collection('analytics').insertOne(analyticsEvent);
+
+        console.log(`❤️ Like added for artwork ${artworkId} by session ${sessionId}`);
 
         // Get updated count
         const likesCount = await db.collection('likes')

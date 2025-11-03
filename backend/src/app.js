@@ -32,6 +32,7 @@ app.use('/api/artworks', require('./routes/artworks'));
 app.use('/api/sessions', require('./routes/sessions'));
 app.use('/api/admin', require('./routes/admin'));
 app.use('/api/reviews', require('./routes/reviews'));
+app.use('/api/feedback', require('./routes/feedback'));
 
 // Error handling middleware
 app.use((err, req, res, next) => {

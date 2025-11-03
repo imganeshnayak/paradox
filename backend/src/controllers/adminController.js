@@ -1,6 +1,7 @@
 const cloudinary = require('../config/cloudinary');
 const jwt = require('jsonwebtoken');
 const bcryptjs = require('bcryptjs');
+const { ObjectId } = require('mongodb');
 const { getDatabase } = require('../config/database');
 const config = require('../config/env');
 
@@ -137,6 +138,11 @@ class AdminController {
       const { startDate, endDate } = req.query;
       const db = getDatabase();
 
+      // Disable caching for dashboard data (always fresh)
+      res.set('Cache-Control', 'no-cache, no-store, must-revalidate');
+      res.set('Pragma', 'no-cache');
+      res.set('Expires', '0');
+
       const filter = {};
       if (startDate || endDate) {
         filter.timestamp = {};
@@ -151,13 +157,35 @@ class AdminController {
       // Total events
       const totalEvents = await db.collection('analytics').countDocuments(filter);
 
+      console.log(`📊 Dashboard: ${totalVisitors} visitors, ${totalEvents} events`);
+
       // Top artworks by views
       const topArtworks = await db.collection('analytics').aggregate([
         { $match: { ...filter, artworkId: { $exists: true } } },
         {
           $group: {
             _id: '$artworkId',
-            views: { $sum: 1 },
+            totalEvents: { $sum: 1 },
+            views: {
+              $sum: {
+                $cond: [{ $eq: ['$eventType', 'artwork_view'] }, 1, 0]
+              }
+            },
+            likes: {
+              $sum: {
+                $cond: [{ $in: ['$eventType', ['like_added', 'like']] }, 1, 0]
+              }
+            },
+            likesRemoved: {
+              $sum: {
+                $cond: [{ $eq: ['$eventType', 'like_removed'] }, 1, 0]
+              }
+            },
+            reviews: {
+              $sum: {
+                $cond: [{ $in: ['$eventType', ['review_submitted', 'review']] }, 1, 0]
+              }
+            },
             uniqueVisitors: { $addToSet: '$anonymousId' },
             avgDwellTime: { $avg: '$metadata.dwellTime' }
           }
@@ -166,8 +194,18 @@ class AdminController {
           $project: {
             artworkId: '$_id',
             views: 1,
+            likes: 1,
+            likesRemoved: 1,
+            netLikes: { $subtract: ['$likes', '$likesRemoved'] },
+            reviews: 1,
             uniqueVisitors: { $size: '$uniqueVisitors' },
             avgDwellTime: { $round: ['$avgDwellTime', 0] },
+            engagement: {
+              $add: [
+                { $subtract: ['$likes', '$likesRemoved'] },
+                { $multiply: ['$reviews', 2] }
+              ]
+            },
             _id: 0
           }
         },
@@ -213,15 +251,21 @@ class AdminController {
       res.json({
         totalVisitors,
         totalEvents,
-        avgEventsPerVisitor: (totalEvents / totalVisitors).toFixed(2),
+        avgEventsPerVisitor: totalVisitors > 0 ? (totalEvents / totalVisitors).toFixed(2) : 0,
         topArtworks,
         eventDistribution,
         timelineData,
-        period: { startDate, endDate }
+        period: { startDate, endDate },
+        debug: {
+          timestamp: new Date(),
+          uniqueSessionsCount: uniqueSessions.length,
+          topArtworksCount: topArtworks.length,
+          eventTypesCount: eventDistribution.length
+        }
       });
     } catch (error) {
       console.error('Dashboard error:', error);
-      res.status(500).json({ error: 'Failed to get dashboard data' });
+      res.status(500).json({ error: 'Failed to get dashboard data', details: error.message });
     }
   }
 
@@ -252,6 +296,116 @@ class AdminController {
     } catch (error) {
       console.error('List artworks error:', error);
       res.status(500).json({ error: 'Failed to list artworks' });
+    }
+  }
+
+  async updateArtworkContent(req, res) {
+    try {
+      const { artworkId } = req.params;
+      const { description, story } = req.body;
+      const db = getDatabase();
+
+      if (!artworkId) {
+        return res.status(400).json({ error: 'Artwork ID required' });
+      }
+
+      if (!description && !story) {
+        return res.status(400).json({ error: 'At least description or story is required' });
+      }
+
+      const updateData = {};
+      
+      if (description) updateData.description = description;
+      if (story) updateData.story = story;
+      updateData.updatedAt = new Date();
+
+      const result = await db.collection('artworks').findOneAndUpdate(
+        { _id: new ObjectId(artworkId) },
+        { $set: updateData },
+        { returnDocument: 'after' }
+      );
+
+      if (!result.value) {
+        return res.status(404).json({ error: 'Artwork not found' });
+      }
+
+      console.log(`📝 Updated artwork ${artworkId}: description and/or story updated`);
+      res.json({
+        message: 'Artwork content updated successfully',
+        artwork: result.value
+      });
+    } catch (error) {
+      console.error('Update artwork error:', error);
+      res.status(500).json({ error: 'Failed to update artwork', details: error.message });
+    }
+  }
+
+  async getAnalyticsDebug(req, res) {
+    try {
+      const db = getDatabase();
+
+      // Count documents in each collection
+      const analyticsCount = await db.collection('analytics').countDocuments({});
+      const likesCount = await db.collection('likes').countDocuments({});
+      const reviewsCount = await db.collection('reviews').countDocuments({});
+
+      // Get event type distribution
+      const eventTypes = await db.collection('analytics').distinct('eventType');
+
+      // Get recent like events
+      const recentLikes = await db.collection('analytics')
+        .find({ eventType: 'like_added' })
+        .sort({ timestamp: -1 })
+        .limit(10)
+        .toArray();
+
+      // Get recent review events
+      const recentReviews = await db.collection('analytics')
+        .find({ eventType: 'review_submitted' })
+        .sort({ timestamp: -1 })
+        .limit(10)
+        .toArray();
+
+      // Get all likes per artwork
+      const likesByArtwork = await db.collection('analytics').aggregate([
+        { $match: { eventType: 'like_added' } },
+        {
+          $group: {
+            _id: '$artworkId',
+            count: { $sum: 1 }
+          }
+        },
+        { $sort: { count: -1 } }
+      ]).toArray();
+
+      // Get all reviews per artwork
+      const reviewsByArtwork = await db.collection('analytics').aggregate([
+        { $match: { eventType: 'review_submitted' } },
+        {
+          $group: {
+            _id: '$artworkId',
+            count: { $sum: 1 }
+          }
+        },
+        { $sort: { count: -1 } }
+      ]).toArray();
+
+      res.json({
+        collections: {
+          analyticsCount,
+          likesCount,
+          reviewsCount
+        },
+        eventTypes,
+        recentLikes,
+        recentReviews,
+        likesByArtwork,
+        reviewsByArtwork,
+        timestamp: new Date()
+      });
+    } catch (error) {
+      console.error('Analytics debug error:', error);
+      res.status(500).json({ error: 'Failed to get analytics debug info' });
     }
   }
 

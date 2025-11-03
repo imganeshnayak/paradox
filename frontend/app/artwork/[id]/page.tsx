@@ -7,12 +7,19 @@ import { Footer } from "@/components/footer"
 import { ArtworkHeader } from "@/components/artwork-detail/artwork-header"
 import { RecommendedArtworks } from "@/components/artwork-detail/recommended-artworks"
 import { FeedbackForm } from "@/components/artwork-detail/feedback-form"
+import { LikeButton } from "@/components/artwork-detail/like-button"
+import { ReviewsDisplay } from "@/components/artwork-detail/reviews-display"
 import { Model3DViewer } from "@/components/artwork-detail/3d-model-viewer"
+import { LanguageSelector } from "@/components/artwork-detail/language-selector"
+import { ArtworkChatbot } from "@/components/artwork-detail/artwork-chatbot"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { BookOpen, Volume2, Play, Cuboid, Trophy } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import { getSessionId } from "@/lib/session-id"
+import { translateArtwork } from "@/lib/translation"
 
 interface Artwork {
+  story: string
   _id: string
   title: string
   artist: string
@@ -35,6 +42,8 @@ export default function ArtworkDetailPage() {
   const [loading, setLoading] = useState(true)
   const [liked, setLiked] = useState(false)
   const [activeTab, setActiveTab] = useState("story")
+  const [currentLanguage, setCurrentLanguage] = useState("en")
+  const [translatedArtwork, setTranslatedArtwork] = useState<any>(null)
 
   useEffect(() => {
     const fetchArtwork = async () => {
@@ -48,6 +57,9 @@ export default function ArtworkDetailPage() {
         if (response.ok) {
           const data = await response.json()
           setArtwork(data)
+          
+          // Record artwork view in analytics
+          recordArtworkView(id, backendUrl)
         } else {
           setArtwork(null)
         }
@@ -63,6 +75,67 @@ export default function ArtworkDetailPage() {
       fetchArtwork()
     }
   }, [id])
+
+  // Handle language change and translation
+  useEffect(() => {
+    const handleTranslation = async () => {
+      if (!artwork) return
+
+      const artData = {
+        ...artwork,
+        description: artwork.description,
+        story: artwork.story || artwork.description,
+        title: artwork.title
+      }
+
+      if (currentLanguage === 'en') {
+        setTranslatedArtwork(null)
+      } else {
+        const translated = await translateArtwork(artData, currentLanguage)
+        setTranslatedArtwork(translated)
+      }
+    }
+
+    handleTranslation()
+  }, [currentLanguage, artwork])
+
+  // Record artwork view event
+  const recordArtworkView = async (artworkId: string, backendUrl: string) => {
+    try {
+      const sessionId = getSessionId()
+      const frontendUrl = typeof window !== 'undefined' ? window.location.origin : ''
+      
+      // Send to frontend proxy which will forward to backend
+      const response = await fetch(`/api/analytics/events`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Session-Id': sessionId,
+          'X-Anonymous-Id': sessionId.substring(0, 8),
+        },
+        body: JSON.stringify({
+          events: [
+            {
+              eventType: 'artwork_view',
+              artworkId: artworkId,
+              sessionId: sessionId,
+              metadata: {
+                timestamp: new Date(),
+              }
+            }
+          ]
+        })
+      })
+
+      if (response.ok) {
+        console.log(`📊 Artwork view recorded for ${artworkId}`)
+      } else {
+        console.error(`Failed to record artwork view: ${response.statusText}`)
+      }
+    } catch (error) {
+      console.error('Failed to record artwork view:', error)
+    }
+  }
 
   if (loading) {
     return (
@@ -90,14 +163,14 @@ export default function ArtworkDetailPage() {
 
   const artworkForDisplay = {
     id: artwork._id,
-    title: artwork.title,
+    title: translatedArtwork?.title || artwork.title,
     artist: artwork.artist,
     year: artwork.yearCreated,
     medium: artwork.medium || 'Unknown',
     period: artwork.period || 'Unknown',
-    description: artwork.description,
+    description: translatedArtwork?.description || artwork.description,
+    story: translatedArtwork?.story || artwork.story || artwork.description,
     image: artwork.images?.[0]?.url || '/placeholder.svg',
-    history: artwork.description,
     audioUrl: artwork.audio?.url,
     audioTranscript: `Listen to the audio guide for ${artwork.title} by ${artwork.artist}`,
     videoUrl: artwork.video?.url,
@@ -112,6 +185,14 @@ export default function ArtworkDetailPage() {
         <ArtworkHeader artwork={artworkForDisplay} liked={liked} onLikeToggle={() => setLiked(!liked)} />
 
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+          {/* Language Selector and Like Button */}
+          <div className="mb-8 flex justify-between items-center">
+            <LikeButton artworkId={artworkForDisplay.id} />
+            <LanguageSelector 
+              currentLanguage={currentLanguage}
+              onLanguageChange={setCurrentLanguage}
+            />
+          </div>
           {/* Tabbed Content */}
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
             {/* Tab List */}
@@ -167,30 +248,21 @@ export default function ArtworkDetailPage() {
             <TabsContent value="story" className="mt-0">
               <div className="bg-card border border-border rounded-lg p-8">
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                  {/* Main Description */}
-                  <div className="lg:col-span-2">
-                    <h2 className="text-2xl font-serif font-bold text-foreground mb-4">About This Artwork</h2>
-                    <div className="prose max-w-none">
-                      <p className="text-foreground/80 leading-relaxed mb-4">{artworkForDisplay.description}</p>
-                      <p className="text-foreground/70 leading-relaxed">{artworkForDisplay.history}</p>
+                  {/* Main Description and Story */}
+                  <div className="lg:col-span-2 space-y-8">
+                    {/* Quick Facts */}
+                    <div>
+                      <h2 className="text-2xl font-serif font-bold text-foreground mb-4">About This Artwork</h2>
+                      <div className="prose max-w-none">
+                        <p className="text-foreground/80 leading-relaxed">{artworkForDisplay.description}</p>
+                      </div>
                     </div>
 
-                    <div className="mt-8 grid grid-cols-2 gap-6">
-                      <div>
-                        <h3 className="text-sm font-semibold text-foreground/60 mb-2">Artist</h3>
-                        <p className="text-lg font-semibold text-foreground">{artworkForDisplay.artist}</p>
-                      </div>
-                      <div>
-                        <h3 className="text-sm font-semibold text-foreground/60 mb-2">Year Created</h3>
-                        <p className="text-lg font-semibold text-foreground">{artworkForDisplay.year}</p>
-                      </div>
-                      <div>
-                        <h3 className="text-sm font-semibold text-foreground/60 mb-2">Medium</h3>
-                        <p className="text-lg font-semibold text-foreground">{artworkForDisplay.medium}</p>
-                      </div>
-                      <div>
-                        <h3 className="text-sm font-semibold text-foreground/60 mb-2">Period</h3>
-                        <p className="text-lg font-semibold text-foreground">{artworkForDisplay.period}</p>
+                    {/* Detailed Story */}
+                    <div>
+                      <h2 className="text-2xl font-serif font-bold text-foreground mb-4">The Story Behind It</h2>
+                      <div className="prose max-w-none">
+                        <p className="text-foreground/80 leading-relaxed">{artworkForDisplay.story}</p>
                       </div>
                     </div>
                   </div>
@@ -202,6 +274,26 @@ export default function ArtworkDetailPage() {
                       alt={artworkForDisplay.title}
                       className="w-full h-auto rounded-lg shadow-md object-cover"
                     />
+                  </div>
+                </div>
+
+                {/* Artwork Details Grid */}
+                <div className="mt-12 grid grid-cols-2 md:grid-cols-4 gap-6 border-t border-border pt-8">
+                  <div>
+                    <h3 className="text-sm font-semibold text-foreground/60 mb-2">Artist</h3>
+                    <p className="text-lg font-semibold text-foreground">{artworkForDisplay.artist}</p>
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-semibold text-foreground/60 mb-2">Year Created</h3>
+                    <p className="text-lg font-semibold text-foreground">{artworkForDisplay.year}</p>
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-semibold text-foreground/60 mb-2">Medium</h3>
+                    <p className="text-lg font-semibold text-foreground">{artworkForDisplay.medium}</p>
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-semibold text-foreground/60 mb-2">Period</h3>
+                    <p className="text-lg font-semibold text-foreground">{artworkForDisplay.period}</p>
                   </div>
                 </div>
               </div>
@@ -289,10 +381,26 @@ export default function ArtworkDetailPage() {
           {/* Recommendations & Feedback */}
           <div className="space-y-12 mt-16">
             <RecommendedArtworks currentArtworkId={artworkForDisplay.id} />
+            <ReviewsDisplay artworkId={artworkForDisplay.id} />
             <FeedbackForm artworkId={artworkForDisplay.id} />
           </div>
         </div>
       </div>
+      
+      {/* AI Chatbot */}
+      <ArtworkChatbot 
+        artwork={{
+          title: artwork.title,
+          artist: artwork.artist,
+          year: artwork.yearCreated,
+          description: artwork.description,
+          story: artwork.story || artwork.description,
+          medium: artwork.medium || 'Unknown',
+          period: artwork.period || 'Unknown'
+        }}
+        language={currentLanguage}
+      />
+      
       <Footer />
     </>
   )

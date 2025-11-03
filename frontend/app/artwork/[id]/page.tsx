@@ -7,87 +7,74 @@ import { Footer } from "@/components/footer"
 import { ArtworkHeader } from "@/components/artwork-detail/artwork-header"
 import { RecommendedArtworks } from "@/components/artwork-detail/recommended-artworks"
 import { FeedbackForm } from "@/components/artwork-detail/feedback-form"
+import { Model3DViewer } from "@/components/artwork-detail/3d-model-viewer"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { BookOpen, Volume2, Play, Cuboid, Trophy } from "lucide-react"
 import { Button } from "@/components/ui/button"
 
-// Mock artwork data
-const artworkData: Record<string, any> = {
-  "1": {
-    id: "1",
-    title: "Starry Night",
-    artist: "Vincent van Gogh",
-    year: 1889,
-    medium: "Oil on canvas",
-    period: "Post-Impressionism",
-    dimensions: "73.7 cm × 92.1 cm",
-    location: "Museum of Modern Art, New York",
-    image: "/placeholder.svg?key=37jeg",
-    description:
-      "A swirling night sky over a sleeping village, one of the most iconic paintings in art history. This masterpiece captures the artist's emotional turbulence and fascination with the night sky, featuring a dynamic composition with bold brushstrokes.",
-    audioUrl: "https://example.com/audio/starry-night.mp3",
-    audioTranscript:
-      "In this iconic work, Van Gogh painted his vision of the night sky with remarkable energy. The eleven stars and crescent moon shine brightly, while the village below remains peaceful and still...",
-    videoUrl: "https://www.youtube.com/embed/e3IWaPlw1FY",
-    history:
-      "Created in Saint-Paul-de-Mausole asylum where Van Gogh was staying, this painting reflects both his struggles and his profound connection to nature.",
-    tags: ["landscape", "night", "famous"],
-    dwell_time_avg: 8.5,
-    model3D: {
-      url: "https://res.cloudinary.com/dahotkqpi/raw/upload/v1/starry-night-3d.glb",
-      format: "glb"
-    }
-  },
-  "2": {
-    id: "2",
-    title: "The Persistence of Memory",
-    artist: "Salvador Dalí",
-    year: 1931,
-    medium: "Oil on canvas",
-    period: "Surrealism",
-    dimensions: "24 cm × 33 cm",
-    location: "Museum of Modern Art, New York",
-    image: "/placeholder.svg?key=iog78",
-    description:
-      "Melting clocks in a dreamlike landscape, exploring the nature of time and reality. This small but mighty painting has become one of the most recognizable works of the Surrealist movement.",
-    audioUrl: "https://example.com/audio/persistence-of-memory.mp3",
-    audioTranscript:
-      "Dalí's masterpiece challenges our perception of time. The soft, melting watches represent the irrelevance of time in the dream world...",
-    videoUrl: "https://www.youtube.com/embed/example",
-    history:
-      "Painted during a period of intense creativity, this work emerged from Dalí's exploration of Freudian psychology and dream imagery.",
-    tags: ["surrealism", "abstract", "famous"],
-    dwell_time_avg: 7.2,
-  },
-  "3": {
-    id: "3",
-    title: "The Kiss",
-    artist: "Gustav Klimt",
-    year: 1908,
-    medium: "Oil and gold leaf on canvas",
-    period: "Art Nouveau",
-    dimensions: "180 cm × 180 cm",
-    location: "Österreichische Galerie Belvedere, Vienna",
-    image: "/placeholder.svg?key=htigk",
-    description:
-      "An intimate moment depicted in gold and precious materials, embodying romantic love. This monumental work combines opulent decoration with genuine emotion, representing Klimt's signature use of gold leaf.",
-    audioUrl: "https://example.com/audio/the-kiss.mp3",
-    audioTranscript:
-      "Klimt's use of gold leaf elevates this intimate moment to the sacred. The couple's embrace is surrounded by elaborate patterns that speak to both luxury and spirituality...",
-    videoUrl: "https://www.youtube.com/embed/example",
-    history:
-      "Created at the height of Klimt's artistic career, this painting represents the synthesis of Art Nouveau aesthetics and profound human emotion.",
-    tags: ["romance", "decorative", "famous"],
-    dwell_time_avg: 9.1,
-  },
+interface Artwork {
+  _id: string
+  title: string
+  artist: string
+  yearCreated: number
+  description: string
+  tags: string[]
+  images: Array<{ url: string }>
+  model3D?: { url: string; format: string }
+  model3d?: { url: string; format: string }  // Handle both cases
+  audio?: { url: string }
+  video?: { url: string }
+  medium?: string
+  period?: string
 }
 
 export default function ArtworkDetailPage() {
   const params = useParams()
   const id = params.id as string
-  const artwork = artworkData[id]
+  const [artwork, setArtwork] = useState<Artwork | null>(null)
+  const [loading, setLoading] = useState(true)
   const [liked, setLiked] = useState(false)
   const [activeTab, setActiveTab] = useState("story")
+
+  useEffect(() => {
+    const fetchArtwork = async () => {
+      try {
+        const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:5000'
+        
+        const response = await fetch(`${backendUrl}/api/artworks/${id}`, {
+          method: 'GET',
+        })
+
+        if (response.ok) {
+          const data = await response.json()
+          setArtwork(data)
+        } else {
+          setArtwork(null)
+        }
+      } catch (error) {
+        console.error('Failed to fetch artwork:', error)
+        setArtwork(null)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    if (id) {
+      fetchArtwork()
+    }
+  }, [id])
+
+  if (loading) {
+    return (
+      <>
+        <Navbar />
+        <div className="min-h-screen bg-background flex items-center justify-center">
+          <p className="text-lg text-foreground/60">Loading artwork...</p>
+        </div>
+        <Footer />
+      </>
+    )
+  }
 
   if (!artwork) {
     return (
@@ -101,11 +88,28 @@ export default function ArtworkDetailPage() {
     )
   }
 
+  const artworkForDisplay = {
+    id: artwork._id,
+    title: artwork.title,
+    artist: artwork.artist,
+    year: artwork.yearCreated,
+    medium: artwork.medium || 'Unknown',
+    period: artwork.period || 'Unknown',
+    description: artwork.description,
+    image: artwork.images?.[0]?.url || '/placeholder.svg',
+    history: artwork.description,
+    audioUrl: artwork.audio?.url,
+    audioTranscript: `Listen to the audio guide for ${artwork.title} by ${artwork.artist}`,
+    videoUrl: artwork.video?.url,
+    model3D: artwork.model3D || artwork.model3d,  // Handle both uppercase and lowercase 'D'
+    tags: artwork.tags || [],
+  }
+
   return (
     <>
       <Navbar />
       <div className="min-h-screen bg-background">
-        <ArtworkHeader artwork={artwork} liked={liked} onLikeToggle={() => setLiked(!liked)} />
+        <ArtworkHeader artwork={artworkForDisplay} liked={liked} onLikeToggle={() => setLiked(!liked)} />
 
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
           {/* Tabbed Content */}
@@ -120,29 +124,35 @@ export default function ArtworkDetailPage() {
                 <span className="hidden sm:inline text-sm">Story</span>
               </TabsTrigger>
 
-              <TabsTrigger
-                value="audio"
-                className="flex items-center gap-2 data-[state=active]:bg-accent/20 rounded"
-              >
-                <Volume2 className="w-4 h-4" />
-                <span className="hidden sm:inline text-sm">Audio</span>
-              </TabsTrigger>
+              {artworkForDisplay.audioUrl && (
+                <TabsTrigger
+                  value="audio"
+                  className="flex items-center gap-2 data-[state=active]:bg-accent/20 rounded"
+                >
+                  <Volume2 className="w-4 h-4" />
+                  <span className="hidden sm:inline text-sm">Audio</span>
+                </TabsTrigger>
+              )}
 
-              <TabsTrigger
-                value="video"
-                className="flex items-center gap-2 data-[state=active]:bg-accent/20 rounded"
-              >
-                <Play className="w-4 h-4" />
-                <span className="hidden sm:inline text-sm">Video</span>
-              </TabsTrigger>
+              {artworkForDisplay.videoUrl && (
+                <TabsTrigger
+                  value="video"
+                  className="flex items-center gap-2 data-[state=active]:bg-accent/20 rounded"
+                >
+                  <Play className="w-4 h-4" />
+                  <span className="hidden sm:inline text-sm">Video</span>
+                </TabsTrigger>
+              )}
 
-              <TabsTrigger
-                value="3d"
-                className="flex items-center gap-2 data-[state=active]:bg-accent/20 rounded"
-              >
-                <Cuboid className="w-4 h-4" />
-                <span className="hidden sm:inline text-sm">3D</span>
-              </TabsTrigger>
+              {artworkForDisplay.model3D && (
+                <TabsTrigger
+                  value="3d"
+                  className="flex items-center gap-2 data-[state=active]:bg-accent/20 rounded"
+                >
+                  <Cuboid className="w-4 h-4" />
+                  <span className="hidden sm:inline text-sm">3D</span>
+                </TabsTrigger>
+              )}
 
               <TabsTrigger
                 value="quiz"
@@ -161,26 +171,26 @@ export default function ArtworkDetailPage() {
                   <div className="lg:col-span-2">
                     <h2 className="text-2xl font-serif font-bold text-foreground mb-4">About This Artwork</h2>
                     <div className="prose max-w-none">
-                      <p className="text-foreground/80 leading-relaxed mb-4">{artwork.description}</p>
-                      <p className="text-foreground/70 leading-relaxed">{artwork.history}</p>
+                      <p className="text-foreground/80 leading-relaxed mb-4">{artworkForDisplay.description}</p>
+                      <p className="text-foreground/70 leading-relaxed">{artworkForDisplay.history}</p>
                     </div>
 
                     <div className="mt-8 grid grid-cols-2 gap-6">
                       <div>
                         <h3 className="text-sm font-semibold text-foreground/60 mb-2">Artist</h3>
-                        <p className="text-lg font-semibold text-foreground">{artwork.artist}</p>
+                        <p className="text-lg font-semibold text-foreground">{artworkForDisplay.artist}</p>
                       </div>
                       <div>
                         <h3 className="text-sm font-semibold text-foreground/60 mb-2">Year Created</h3>
-                        <p className="text-lg font-semibold text-foreground">{artwork.year}</p>
+                        <p className="text-lg font-semibold text-foreground">{artworkForDisplay.year}</p>
                       </div>
                       <div>
                         <h3 className="text-sm font-semibold text-foreground/60 mb-2">Medium</h3>
-                        <p className="text-lg font-semibold text-foreground">{artwork.medium}</p>
+                        <p className="text-lg font-semibold text-foreground">{artworkForDisplay.medium}</p>
                       </div>
                       <div>
                         <h3 className="text-sm font-semibold text-foreground/60 mb-2">Period</h3>
-                        <p className="text-lg font-semibold text-foreground">{artwork.period}</p>
+                        <p className="text-lg font-semibold text-foreground">{artworkForDisplay.period}</p>
                       </div>
                     </div>
                   </div>
@@ -188,103 +198,98 @@ export default function ArtworkDetailPage() {
                   {/* Side Image */}
                   <div>
                     <img
-                      src={artwork.image}
-                      alt={artwork.title}
+                      src={artworkForDisplay.image}
+                      alt={artworkForDisplay.title}
                       className="w-full h-auto rounded-lg shadow-md object-cover"
                     />
-                    <div className="mt-4 p-4 bg-accent/10 rounded-lg">
-                      <p className="text-sm text-foreground/70">{artwork.dimensions}</p>
-                    </div>
                   </div>
                 </div>
               </div>
             </TabsContent>
 
             {/* Audio Guide Tab */}
-            <TabsContent value="audio" className="mt-0">
-              <div className="bg-card border border-border rounded-lg p-8">
-                <h2 className="text-2xl font-serif font-bold text-foreground mb-6">Audio Guide</h2>
+            {artworkForDisplay.audioUrl && (
+              <TabsContent value="audio" className="mt-0">
+                <div className="bg-card border border-border rounded-lg p-8">
+                  <h2 className="text-2xl font-serif font-bold text-foreground mb-6">Audio Guide</h2>
 
-                {/* Audio Player */}
-                <div className="mb-8 p-6 bg-accent/5 rounded-lg">
-                  <audio
-                    controls
-                    className="w-full mb-4"
-                  >
-                    <source src={artwork.audioUrl} type="audio/mpeg" />
-                    Your browser does not support the audio element.
-                  </audio>
+                  {/* Audio Player */}
+                  <div className="mb-8 p-6 bg-accent/5 rounded-lg">
+                    <audio
+                      controls
+                      className="w-full mb-4"
+                    >
+                      <source src={artworkForDisplay.audioUrl} type="audio/mpeg" />
+                      Your browser does not support the audio element.
+                    </audio>
+                  </div>
+
+                  {/* Transcript */}
+                  <div>
+                    <h3 className="text-lg font-semibold text-foreground mb-4">Transcript</h3>
+                    <div className="bg-background p-6 rounded-lg border border-border">
+                      <p className="text-foreground/80 leading-relaxed">
+                        {artworkForDisplay.audioTranscript}
+                      </p>
+                    </div>
+                  </div>
                 </div>
+              </TabsContent>
+            )}
 
-                {/* Transcript */}
-                <div>
-                  <h3 className="text-lg font-semibold text-foreground mb-4">Transcript</h3>
-                  <div className="bg-background p-6 rounded-lg border border-border">
-                    <p className="text-foreground/80 leading-relaxed">
-                      {artwork.audioTranscript}
+            {/* Video Guide Tab */}
+            {artworkForDisplay.videoUrl && (
+              <TabsContent value="video" className="mt-0">
+                <div className="bg-card border border-border rounded-lg p-8">
+                  <h2 className="text-2xl font-serif font-bold text-foreground mb-6">Video Guide</h2>
+
+                  <div className="aspect-video bg-foreground/10 rounded-lg overflow-hidden">
+                    <iframe
+                      className="w-full h-full"
+                      src={artworkForDisplay.videoUrl}
+                      title="Artwork Video Guide"
+                      frameBorder="0"
+                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                      allowFullScreen
+                    />
+                  </div>
+                </div>
+              </TabsContent>
+            )}
+
+            {/* 3D Viewer Tab */}
+            {artworkForDisplay.model3D && (
+              <TabsContent value="3d" className="mt-0">
+                <div className="bg-card border border-border rounded-lg p-8">
+                  <h2 className="text-2xl font-serif font-bold text-foreground mb-6">3D Model Viewer</h2>
+
+                  <div className="rounded-lg overflow-hidden bg-white">
+                    <Model3DViewer modelUrl={artworkForDisplay.model3D.url} title={artworkForDisplay.title} />
+                  </div>
+
+                  <div className="mt-4 p-4 bg-accent/5 border border-accent/20 rounded-lg">
+                    <p className="text-sm text-foreground/70">
+                      💡 <strong>Tip:</strong> Use your mouse to rotate the model, scroll to zoom, and right-click to pan.
                     </p>
                   </div>
                 </div>
-              </div>
-            </TabsContent>
-
-            {/* Video Guide Tab */}
-            <TabsContent value="video" className="mt-0">
-              <div className="bg-card border border-border rounded-lg p-8">
-                <h2 className="text-2xl font-serif font-bold text-foreground mb-6">Video Guide</h2>
-
-                <div className="aspect-video bg-foreground/10 rounded-lg overflow-hidden">
-                  <iframe
-                    className="w-full h-full"
-                    src={artwork.videoUrl}
-                    title="Artwork Video Guide"
-                    frameBorder="0"
-                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                    allowFullScreen
-                  />
-                </div>
-              </div>
-            </TabsContent>
-
-            {/* 3D Viewer Tab */}
-            <TabsContent value="3d" className="mt-0">
-              <div className="bg-card border border-border rounded-lg p-8">
-                <h2 className="text-2xl font-serif font-bold text-foreground mb-6">3D Model Viewer</h2>
-
-                <div className="aspect-video bg-foreground/10 rounded-lg overflow-hidden flex items-center justify-center">
-                  <div className="text-center">
-                    <Cuboid className="w-16 h-16 text-foreground/30 mx-auto mb-4" />
-                    <p className="text-foreground/60 font-medium">3D Model Viewer</p>
-                    <p className="text-sm text-foreground/40 mt-2">Interact with the 3D model using mouse or touch</p>
-                    {artwork.model3D && (
-                      <a
-                        href={artwork.model3D.url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="inline-block mt-4 px-4 py-2 bg-accent text-accent-foreground rounded-lg text-sm font-medium hover:opacity-90"
-                      >
-                        View Full 3D Model
-                      </a>
-                    )}
-                  </div>
-                </div>
-              </div>
-            </TabsContent>
+              </TabsContent>
+            )}
 
             {/* Quiz Tab */}
             <TabsContent value="quiz" className="mt-0">
               <div className="bg-card border border-border rounded-lg p-8">
                 <h2 className="text-2xl font-serif font-bold text-foreground mb-6">Test Your Knowledge</h2>
 
-                <QuizComponent artwork={artwork} />
+                <QuizComponent artwork={artworkForDisplay} />
               </div>
             </TabsContent>
           </Tabs>
 
           {/* Recommendations & Feedback */}
           <div className="space-y-12 mt-16">
-            <RecommendedArtworks currentArtworkId={artwork.id} />
-            <FeedbackForm artworkId={artwork.id} />
+            <RecommendedArtworks currentArtworkId={artworkForDisplay.id} />
+            <FeedbackForm artworkId={artworkForDisplay.id} />
           </div>
         </div>
       </div>

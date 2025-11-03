@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import Link from "next/link"
 import { Menu, X, Scan } from "lucide-react"
 import { Button } from "@/components/ui/button"
@@ -10,7 +10,16 @@ import { useRouter } from "next/navigation"
 export function Navbar() {
   const [isOpen, setIsOpen] = useState(false)
   const [qrScannerOpen, setQRScannerOpen] = useState(false)
+  const [isAdmin, setIsAdmin] = useState(false)
   const router = useRouter()
+
+  useEffect(() => {
+    // Check if admin token exists in localStorage
+    if (typeof window !== 'undefined') {
+      const token = localStorage.getItem('admin-token')
+      setIsAdmin(!!token)
+    }
+  }, [])
 
   const handleQRScan = (result: string) => {
     router.push(result)
@@ -32,9 +41,11 @@ export function Navbar() {
               <Link href="/museum-map" className="text-foreground hover:text-primary transition-colors">
                 Museum Map
               </Link>
-              <Link href="/admin" className="text-foreground hover:text-primary transition-colors">
-                Admin
-              </Link>
+              {isAdmin && (
+                <Link href="/admin" className="text-foreground hover:text-primary transition-colors">
+                  Admin
+                </Link>
+              )}
             </div>
 
             <div className="hidden md:flex gap-2">
@@ -56,9 +67,11 @@ export function Navbar() {
               <Link href="/museum-map" className="text-foreground hover:text-primary transition-colors">
                 Museum Map
               </Link>
-              <Link href="/admin" className="text-foreground hover:text-primary transition-colors">
-                Admin
-              </Link>
+              {isAdmin && (
+                <Link href="/admin" className="text-foreground hover:text-primary transition-colors">
+                  Admin
+                </Link>
+              )}
               <Button
                 onClick={() => {
                   setQRScannerOpen(true)

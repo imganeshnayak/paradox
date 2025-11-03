@@ -1,6 +1,7 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
+import { useRouter } from "next/navigation"
 import { Navbar } from "@/components/navbar"
 import { Footer } from "@/components/footer"
 import { Button } from "@/components/ui/button"
@@ -13,6 +14,23 @@ export default function UploadArtworkPage() {
   const [loading, setLoading] = useState(false)
   const [success, setSuccess] = useState(false)
   const [error, setError] = useState("")
+  const [isAuthenticated, setIsAuthenticated] = useState(false)
+  const [isLoading, setIsLoading] = useState(true)
+  const router = useRouter()
+
+  useEffect(() => {
+    // Check if admin token exists
+    if (typeof window !== 'undefined') {
+      const token = localStorage.getItem('admin-token')
+      if (token) {
+        setIsAuthenticated(true)
+      } else {
+        // Redirect to login if no token
+        router.push('/admin/login')
+      }
+      setIsLoading(false)
+    }
+  }, [router])
 
   // Metadata
   const [title, setTitle] = useState("")
@@ -115,6 +133,18 @@ export default function UploadArtworkPage() {
     setVideo(null)
     setError("")
     setSuccess(false)
+  }
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <p className="text-foreground/60">Loading...</p>
+      </div>
+    )
+  }
+
+  if (!isAuthenticated) {
+    return null
   }
 
   return (

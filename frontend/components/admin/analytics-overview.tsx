@@ -1,38 +1,76 @@
+"use client"
+
+import { useEffect, useState } from "react"
 import { Card } from "@/components/ui/card"
 import { Users, Eye, Clock, ThumbsUp } from "lucide-react"
 
-const metrics = [
-  {
-    icon: Users,
-    label: "Total Visitors",
-    value: "2,847",
-    change: "+12.5%",
-    positive: true,
-  },
-  {
-    icon: Eye,
-    label: "Artworks Viewed",
-    value: "15,294",
-    change: "+8.2%",
-    positive: true,
-  },
-  {
-    icon: Clock,
-    label: "Avg Dwell Time",
-    value: "6:42",
-    change: "+2.1 min",
-    positive: true,
-  },
-  {
-    icon: ThumbsUp,
-    label: "Avg Rating",
-    value: "4.6/5",
-    change: "+0.3",
-    positive: true,
-  },
-]
+interface DashboardData {
+  totalVisitors: number
+  totalEvents: number
+  avgEventsPerVisitor: string
+}
 
 export function AnalyticsOverview() {
+  const [data, setData] = useState<DashboardData | null>(null)
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    const fetchDashboardData = async () => {
+      try {
+        const token = localStorage.getItem('admin-token')
+        const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:5000'
+        
+        const response = await fetch(`${backendUrl}/api/admin/dashboard`, {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+          },
+        })
+
+        if (response.ok) {
+          const dashboardData = await response.json()
+          setData(dashboardData)
+        }
+      } catch (error) {
+        console.error('Failed to fetch dashboard data:', error)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchDashboardData()
+  }, [])
+
+  const metrics = [
+    {
+      icon: Users,
+      label: "Total Visitors",
+      value: data ? data.totalVisitors.toLocaleString() : "0",
+      change: "+0%",
+      positive: true,
+    },
+    {
+      icon: Eye,
+      label: "Total Events",
+      value: data ? data.totalEvents.toLocaleString() : "0",
+      change: "+0%",
+      positive: true,
+    },
+    {
+      icon: Clock,
+      label: "Avg Events/Visitor",
+      value: data ? parseFloat(data.avgEventsPerVisitor).toFixed(2) : "0",
+      change: "+0%",
+      positive: true,
+    },
+    {
+      icon: ThumbsUp,
+      label: "Active Sessions",
+      value: loading ? "..." : "N/A",
+      change: "+0%",
+      positive: true,
+    },
+  ]
+
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
       {metrics.map((metric, index) => {

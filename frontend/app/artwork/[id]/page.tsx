@@ -12,6 +12,7 @@ import { ReviewsDisplay } from "@/components/artwork-detail/reviews-display"
 import { Model3DViewer } from "@/components/artwork-detail/3d-model-viewer"
 import { LanguageSelector } from "@/components/artwork-detail/language-selector"
 import { ArtworkChatbot } from "@/components/artwork-detail/artwork-chatbot"
+import { TextReader } from "@/components/artwork-detail/text-reader"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { BookOpen, Volume2, Play, Cuboid, Trophy } from "lucide-react"
 import { Button } from "@/components/ui/button"
@@ -250,6 +251,12 @@ export default function ArtworkDetailPage() {
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                   {/* Main Description and Story */}
                   <div className="lg:col-span-2 space-y-8">
+                    {/* Text Reader */}
+                    <TextReader 
+                      text={`${artworkForDisplay.description} ${artworkForDisplay.story}`}
+                      title={artworkForDisplay.title}
+                    />
+
                     {/* Quick Facts */}
                     <div>
                       <h2 className="text-2xl font-serif font-bold text-foreground mb-4">About This Artwork</h2>

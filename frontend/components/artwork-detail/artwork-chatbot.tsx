@@ -32,7 +32,9 @@ export function ArtworkChatbot({ artwork, language }: ArtworkChatbotProps) {
   const [messages, setMessages] = useState<Message[]>([])
   const [inputValue, setInputValue] = useState("")
   const [isLoading, setIsLoading] = useState(false)
+  const [isUserTyping, setIsUserTyping] = useState(false)
   const scrollAreaRef = useRef<HTMLDivElement>(null)
+  const typingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   useEffect(() => {
     if (isOpen && messages.length === 0) {
@@ -130,6 +132,23 @@ export function ArtworkChatbot({ artwork, language }: ArtworkChatbotProps) {
     }
   }
 
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setInputValue(e.target.value)
+    
+    // Show typing indicator
+    setIsUserTyping(true)
+    
+    // Clear existing timeout
+    if (typingTimeoutRef.current) {
+      clearTimeout(typingTimeoutRef.current)
+    }
+    
+    // Hide typing indicator after 1.5 seconds of no input
+    typingTimeoutRef.current = setTimeout(() => {
+      setIsUserTyping(false)
+    }, 1500)
+  }
+
   if (!isOpen) {
     return (
       <button
@@ -156,19 +175,41 @@ export function ArtworkChatbot({ artwork, language }: ArtworkChatbotProps) {
       </CardHeader>
 
       <CardContent className="flex flex-col p-0 overflow-hidden" style={{ height: 'calc(100% - 60px)' }}>
-        {/* 3D Robot Model - Only render when chatbot is open */}
-        <div className="w-full h-48 sm:h-56 min-h-[12rem] bg-gradient-to-b from-accent/5 to-accent/10 border-b relative flex-shrink-0">
-          <iframe 
-            src='https://my.spline.design/greetingrobot-S0D5T8vmFbhMNtZ3WcbXZpdw/' 
-            frameBorder='0' 
-            width='100%'
-            height='100%'
-            className="w-full h-full"
-            title="AI Assistant Robot"
-            loading="lazy"
-            style={{ border: 0, display: 'block', minHeight: '12rem' }}
-          />
-        </div>
+        {/* 3D Robot Model - Small, bottom-right, hidden while typing */}
+        {!isUserTyping && (
+          <div className="absolute bottom-20 right-0 z-10 w-40 h-40 pointer-events-none">
+            <style>{`
+              iframe[title="AI Assistant Robot"] {
+                -webkit-user-select: none;
+                -moz-user-select: none;
+                -ms-user-select: none;
+                user-select: none;
+              }
+              /* Hide Spline watermark */
+              iframe[title="AI Assistant Robot"]::after {
+                display: none !important;
+              }
+              .spline-watermark {
+                display: none !important;
+              }
+            `}</style>
+            <iframe 
+              src='https://my.spline.design/greetingrobot-S0D5T8vmFbhMNtZ3WcbXZpdw/' 
+              frameBorder='0' 
+              width='100%'
+              height='100%'
+              className="w-full h-full"
+              title="AI Assistant Robot"
+              loading="lazy"
+              style={{ 
+                border: 0, 
+                display: 'block',
+                borderRadius: '12px',
+                overflow: 'hidden'
+              }}
+            />
+          </div>
+        )}
 
         <ScrollArea className="flex-1 p-4 min-h-0">
           <div className="space-y-4">
@@ -205,7 +246,7 @@ export function ArtworkChatbot({ artwork, language }: ArtworkChatbotProps) {
           <div className="flex gap-2">
             <Input
               value={inputValue}
-              onChange={(e) => setInputValue(e.target.value)}
+              onChange={handleInputChange}
               onKeyPress={handleKeyPress}
               placeholder={language === 'es' ? 'Escribe tu pregunta...' : language === 'fr' ? 'Tapez votre question...' : 'Type your question...'}
               disabled={isLoading}

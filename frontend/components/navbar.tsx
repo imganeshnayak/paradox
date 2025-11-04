@@ -21,8 +21,15 @@ export function Navbar() {
     }
   }, [])
 
-  const handleQRScan = (result: string) => {
-    router.push(result)
+  const handleQRScan = (scannedData: string) => {
+    // Parse QR code data: format is "artwork:{artworkId}"
+    let artworkId = scannedData;
+    if (scannedData.startsWith('artwork:')) {
+      artworkId = scannedData.replace('artwork:', '');
+    }
+    // Navigate to artwork detail page
+    router.push(`/artwork/${artworkId}`)
+    setQRScannerOpen(false)
   }
 
   return (

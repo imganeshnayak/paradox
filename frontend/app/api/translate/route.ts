@@ -1,8 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
 
 /**
- * Translation API using Open Router or Hugging Face translation models
- * Falls back gracefully if one provider fails
+ * Translation API with multi-provider fallback
+ * Primary: Open Router
+ * Fallback 1: Google Gemini
+ * Fallback 2: Hugging Face translation models
  */
 export async function POST(request: NextRequest) {
   try {
@@ -20,14 +22,18 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({
         translatedText: text,
         originalText: text,
-        targetLanguage
+        targetLanguage,
+        provider: 'none-needed'
       })
     }
+
+    let translatedText: string | null = null
+    let provider = 'unknown'
 
     // Try Open Router first (most reliable)
     const OPEN_ROUTER_KEY = process.env.OPEN_ROUTER_API_KEY || ''
     
-    if (OPEN_ROUTER_KEY) {
+    if (OPEN_ROUTER_KEY && !translatedText) {
       try {
         const translationPrompt = `Translate the following text to ${targetLanguage === 'es' ? 'Spanish' : targetLanguage === 'fr' ? 'French' : targetLanguage}. Only provide the translation, nothing else:\n\n${text}`
         
@@ -51,70 +57,117 @@ export async function POST(request: NextRequest) {
 
         if (response.ok) {
           const result = await response.json()
-          const translatedText = result?.choices?.[0]?.message?.content?.trim() || text
-          console.log(`✅ Translation via Open Router: ${targetLanguage}`)
-          
-          return NextResponse.json({
-            translatedText,
-            originalText: text,
-            targetLanguage,
-            provider: 'open-router'
-          })
+          translatedText = result?.choices?.[0]?.message?.content?.trim() || null
+          if (translatedText) {
+            provider = 'open-router'
+            console.log(`✅ Translation via Open Router: ${targetLanguage}`)
+          }
         }
       } catch (openRouterError) {
-        console.warn('Open Router translation failed, trying Hugging Face...', openRouterError)
+        console.warn('Open Router translation failed, trying Gemini...', openRouterError)
+      }
+    }
+
+    // Fallback to Gemini if Open Router fails
+    if (!translatedText) {
+      const GEMINI_KEY = process.env.GEMINI_API_KEY || ''
+      if (GEMINI_KEY) {
+        try {
+          const translationPrompt = `Translate the following text to ${targetLanguage === 'es' ? 'Spanish' : targetLanguage === 'fr' ? 'French' : targetLanguage}. Only provide the translation, nothing else:\n\n${text}`
+          
+          const geminiResponse = await fetch(
+            `https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${GEMINI_KEY}`,
+            {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({
+                contents: [
+                  {
+                    role: 'user',
+                    parts: [
+                      { text: translationPrompt },
+                    ],
+                  },
+                ],
+                generationConfig: {
+                  temperature: 0.3,
+                  maxOutputTokens: 500,
+                },
+              }),
+            }
+          )
+
+          if (geminiResponse.ok) {
+            const geminiResult = await geminiResponse.json()
+            translatedText = geminiResult?.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || null
+            if (translatedText) {
+              provider = 'gemini'
+              console.log(`✅ Translation via Gemini: ${targetLanguage}`)
+            }
+          }
+        } catch (geminiError) {
+          console.warn('Gemini translation failed, trying Hugging Face...', geminiError)
+        }
       }
     }
 
     // Fallback to Hugging Face
-    const HF_API_KEY = process.env.HF_TOKEN || process.env.HUGGING_FACE_API_KEY || ''
-    
-    // Map language codes to Helsinki-NLP models
-    const modelMap: { [key: string]: string } = {
-      'es': 'Helsinki-NLP/opus-mt-en-es',  // English to Spanish
-      'fr': 'Helsinki-NLP/opus-mt-en-fr',  // English to French
-    }
-
-    const model = modelMap[targetLanguage]
-    
-    if (!model) {
-      console.warn(`Unsupported target language: ${targetLanguage}`)
-      return NextResponse.json({
-        translatedText: text,
-        originalText: text,
-        targetLanguage,
-        warning: 'Unsupported language, returning original text'
-      })
-    }
-
-    const response = await fetch(
-      `https://api-inference.huggingface.co/models/${model}`,
-      {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${HF_API_KEY}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          inputs: text,
-          options: { wait_for_model: true }
-        })
+    if (!translatedText) {
+      const HF_API_KEY = process.env.HF_TOKEN || process.env.HUGGING_FACE_API_KEY || ''
+      
+      // Map language codes to Helsinki-NLP models
+      const modelMap: { [key: string]: string } = {
+        'es': 'Helsinki-NLP/opus-mt-en-es',  // English to Spanish
+        'fr': 'Helsinki-NLP/opus-mt-en-fr',  // English to French
       }
-    )
 
-    if (!response.ok) {
-      throw new Error(`Hugging Face API error: ${response.statusText}`)
+      const model = modelMap[targetLanguage]
+      
+      if (model && HF_API_KEY) {
+        try {
+          const response = await fetch(
+            `https://api-inference.huggingface.co/models/${model}`,
+            {
+              method: 'POST',
+              headers: {
+                'Authorization': `Bearer ${HF_API_KEY}`,
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({
+                inputs: text,
+                options: { wait_for_model: true }
+              })
+            }
+          )
+
+          if (response.ok) {
+            const result = await response.json()
+            translatedText = result[0]?.translation_text || null
+            if (translatedText) {
+              provider = 'hugging-face'
+              console.log(`✅ Translation via Hugging Face: ${targetLanguage}`)
+            }
+          }
+        } catch (hfError) {
+          console.warn('Hugging Face translation failed:', hfError)
+        }
+      }
     }
 
-    const result = await response.json()
-    const translatedText = result[0]?.translation_text || text
-    console.log(`✅ Translation via Hugging Face: ${targetLanguage}`)
+    // If all providers fail, return original text
+    if (!translatedText) {
+      translatedText = text
+      provider = 'fallback'
+      console.warn(`⚠️ All translation providers failed, returning original text`)
+    }
 
     return NextResponse.json({
       translatedText,
       originalText: text,
       targetLanguage,
-      provider: 'hugging-face'
+      provider
     })
   } catch (error) {
     console.error('Translation error:', error)
@@ -125,6 +178,7 @@ export async function POST(request: NextRequest) {
       translatedText: text,
       originalText: text,
       targetLanguage,
+      provider: 'fallback',
       warning: 'Translation service unavailable, returning original text'
     }, { status: 200 })
   }

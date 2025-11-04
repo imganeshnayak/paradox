@@ -7,6 +7,10 @@ import { MessageCircle, X, Send, Loader2 } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { ScrollArea } from "@/components/ui/scroll-area"
 
+const getBackendUrl = () => {
+  return process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:5000'
+}
+
 interface Message {
   id: string
   text: string
@@ -81,7 +85,8 @@ export function ArtworkChatbot({ artwork, language }: ArtworkChatbotProps) {
 
     try {
       // Call backend API to get AI response
-      const response = await fetch('/api/ai-chat', {
+      const backendUrl = getBackendUrl()
+      const response = await fetch(`${backendUrl}/api/ai-chat`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

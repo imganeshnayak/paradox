@@ -7,6 +7,10 @@ import { Button } from "@/components/ui/button"
 import { Star, Send, Loader2 } from "lucide-react"
 import { getSessionId } from "@/lib/session-id"
 
+const getBackendUrl = () => {
+  return process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:5000'
+}
+
 interface FeedbackFormProps {
   artworkId: string
 }
@@ -30,9 +34,10 @@ export function FeedbackForm({ artworkId }: FeedbackFormProps) {
     setError("")
 
     try {
+      const backendUrl = getBackendUrl()
       const sessionId = getSessionId()
       
-      const response = await fetch(`/api/reviews/${artworkId}/reviews`, {
+      const response = await fetch(`${backendUrl}/api/reviews/${artworkId}/reviews`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

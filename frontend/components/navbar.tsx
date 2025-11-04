@@ -2,14 +2,16 @@
 
 import { useState, useEffect } from "react"
 import Link from "next/link"
-import { Menu, X, Scan } from "lucide-react"
+import { Menu, X, Scan, Image as ImageIcon } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { QRScanner } from "@/components/qr-scanner"
+import { ImageScanner } from "@/components/image-scanner"
 import { useRouter } from "next/navigation"
 
 export function Navbar() {
   const [isOpen, setIsOpen] = useState(false)
   const [qrScannerOpen, setQRScannerOpen] = useState(false)
+  const [imageScannerOpen, setImageScannerOpen] = useState(false)
   const [isAdmin, setIsAdmin] = useState(false)
   const router = useRouter()
 
@@ -59,6 +61,9 @@ export function Navbar() {
               <Button onClick={() => setQRScannerOpen(true)} variant="outline" size="icon" title="Scan QR Code">
                 <Scan size={20} />
               </Button>
+              <Button onClick={() => setImageScannerOpen(true)} variant="outline" size="icon" title="Scan Artwork Image">
+                <ImageIcon size={20} />
+              </Button>
             </div>
 
             <button className="md:hidden" onClick={() => setIsOpen(!isOpen)}>
@@ -90,12 +95,25 @@ export function Navbar() {
                 <Scan size={20} className="mr-2" />
                 Scan QR Code
               </Button>
+              <Button
+                onClick={() => {
+                  setImageScannerOpen(true)
+                  setIsOpen(false)
+                }}
+                variant="outline"
+                className="w-full justify-start"
+              >
+                <ImageIcon size={20} className="mr-2" />
+                Scan Artwork
+              </Button>
             </div>
           )}
         </div>
       </nav>
 
       <QRScanner isOpen={qrScannerOpen} onClose={() => setQRScannerOpen(false)} onScan={handleQRScan} />
+      <ImageScanner isOpen={imageScannerOpen} onClose={() => setImageScannerOpen(false)} />
     </>
   )
 }
+

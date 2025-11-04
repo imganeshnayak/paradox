@@ -7,6 +7,10 @@ import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { AlertCircle, CheckCircle, Loader2 } from "lucide-react"
 
+const getBackendUrl = () => {
+  return process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:5000'
+}
+
 interface ArtworkUploadModalProps {
   open: boolean
   onOpenChange: (open: boolean) => void
@@ -89,7 +93,8 @@ export function ArtworkUploadModal({
       if (video.trim()) formData.append("video", video)
 
       // Send to backend
-      const response = await fetch("/api/admin/artwork-upload", {
+      const backendUrl = getBackendUrl()
+      const response = await fetch(`${backendUrl}/api/admin/artwork-upload`, {
         method: "POST",
         body: formData,
       })

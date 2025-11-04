@@ -3,6 +3,10 @@
 import { useState, useEffect } from "react"
 import { Star, MessageCircle } from "lucide-react"
 
+const getBackendUrl = () => {
+  return process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:5000'
+}
+
 interface Review {
   _id: string
   rating: number
@@ -33,7 +37,8 @@ export function ReviewsDisplay({ artworkId }: ReviewsDisplayProps) {
   useEffect(() => {
     const fetchReviews = async () => {
       try {
-        const response = await fetch(`/api/reviews/${artworkId}/reviews`)
+        const backendUrl = getBackendUrl()
+        const response = await fetch(`${backendUrl}/api/reviews/${artworkId}/reviews`)
         if (response.ok) {
           const data = await response.json()
           setReviews(data.reviews)

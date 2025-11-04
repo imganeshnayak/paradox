@@ -4,6 +4,10 @@ import { useState, useEffect } from "react"
 import { Heart } from "lucide-react"
 import { getSessionId } from "@/lib/session-id"
 
+const getBackendUrl = () => {
+  return process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:5000'
+}
+
 interface LikeButtonProps {
   artworkId: string
 }
@@ -18,8 +22,9 @@ export function LikeButton({ artworkId }: LikeButtonProps) {
   useEffect(() => {
     const checkLike = async () => {
       try {
+        const backendUrl = getBackendUrl()
         const sessionId = getSessionId()
-        const response = await fetch(`/api/reviews/${artworkId}/like/check?sessionId=${sessionId}`)
+        const response = await fetch(`${backendUrl}/api/reviews/${artworkId}/like/check?sessionId=${sessionId}`)
         
         if (response.ok) {
           const data = await response.json()
@@ -41,8 +46,9 @@ export function LikeButton({ artworkId }: LikeButtonProps) {
 
     setLoading(true)
     try {
+      const backendUrl = getBackendUrl()
       const sessionId = getSessionId()
-      const response = await fetch(`/api/reviews/${artworkId}/like`, {
+      const response = await fetch(`${backendUrl}/api/reviews/${artworkId}/like`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

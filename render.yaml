@@ -29,3 +29,6 @@ services:
         sync: false
       - key: LOG_LEVEL
         value: info
+      - key: GEMINI_API_KEY
+        sync: false
+

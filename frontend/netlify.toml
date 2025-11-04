@@ -1,3 +1,5 @@
+
+
 [build]
 command = "npm run build"
 publish = ".next"
@@ -6,14 +8,19 @@ publish = ".next"
 NEXT_PUBLIC_BACKEND_URL = "https://paradox-wygi.onrender.com"
 NEXT_PUBLIC_API_URL = "https://paradox-wygi.onrender.com/api"
 
-[[redirects]]
+[[plugins]]
+package = "@netlify/plugin-nextjs"
 
-# SPA fallback for client-side routing (dynamic routes)
 [[redirects]]
 from = "/*"
 to = "/index.html"
 status = 200
 
-[context.production.environment]
+[build.environment]
 NEXT_PUBLIC_BACKEND_URL = "https://paradox-wygi.onrender.com"
 NEXT_PUBLIC_API_URL = "https://paradox-wygi.onrender.com/api"
+
+[[redirects]]
+from = "/*"
+to = "/index.html"
+status = 200

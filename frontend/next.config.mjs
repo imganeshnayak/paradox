@@ -1,5 +1,7 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  output: 'standalone', // 👈 This is the key line for Netlify/Render-style deploys
+
   typescript: {
     ignoreBuildErrors: true,
   },

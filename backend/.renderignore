@@ -6,4 +6,4 @@ npm-debug.log
 .env.development
 README.md
 .DS_Store
-*.pem
+// *.pem

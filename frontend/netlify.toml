@@ -1,0 +1,19 @@
+[build]
+command = "npm run build"
+functions = "netlify/functions"
+publish = ".next"
+
+[build.environment]
+NEXT_PUBLIC_BACKEND_URL = "https://paradox-wygi.onrender.com"
+NEXT_PUBLIC_API_URL = "https://paradox-wygi.onrender.com/api"
+
+[[redirects]]
+from = "/*"
+to = "/index.html"
+status = 200
+
+[context.production]
+environment = { NEXT_PUBLIC_BACKEND_URL = "https://paradox-wygi.onrender.com", NEXT_PUBLIC_API_URL = "https://paradox-wygi.onrender.com/api" }
+
+[context.deploy-preview]
+environment = { NEXT_PUBLIC_BACKEND_URL = "https://paradox-wygi.onrender.com", NEXT_PUBLIC_API_URL = "https://paradox-wygi.onrender.com/api" }

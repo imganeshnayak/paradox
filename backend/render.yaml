@@ -4,6 +4,7 @@ services:
     runtime: node
     plan: free
     branch: main
+    rootDir: backend
     buildCommand: npm install
     startCommand: npm start
     envVars:

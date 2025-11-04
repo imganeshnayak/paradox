@@ -1,4 +1,3 @@
-require('dotenv').config();
 const { GoogleGenerativeAI } = require('@google/generative-ai');
 
 const OPENROUTER_API_KEY = process.env.OPENROUTER_API_KEY;

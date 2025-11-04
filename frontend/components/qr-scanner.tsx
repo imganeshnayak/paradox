@@ -14,7 +14,11 @@ interface QRScannerProps {
 
 declare global {
   interface Window {
-    QRCode?: any;
+    jsQR?: (
+      data: Uint8ClampedArray,
+      width: number,
+      height: number
+    ) => { data: string } | null;
   }
 }
 
@@ -28,10 +32,16 @@ export function QRScanner({ isOpen, onClose, onScan }: QRScannerProps) {
 
   // Load jsQR library
   useEffect(() => {
-    if (window.QRCode) return;
-
+    if (window.jsQR) return;
     const script = document.createElement('script');
     script.src = 'https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js';
+    script.onload = () => {
+      console.log('jsQR loaded');
+    };
+    script.onerror = () => {
+      setError('Failed to load QR code library.');
+      console.error('Failed to load jsQR library');
+    };
     document.head.appendChild(script);
   }, []);
 
@@ -42,6 +52,7 @@ export function QRScanner({ isOpen, onClose, onScan }: QRScannerProps) {
     const initCamera = async () => {
       try {
         setError('');
+        console.log('Requesting camera access...');
         const stream = await navigator.mediaDevices.getUserMedia({
           video: { facingMode: 'environment' },
           audio: false,
@@ -51,11 +62,13 @@ export function QRScanner({ isOpen, onClose, onScan }: QRScannerProps) {
           videoRef.current.srcObject = stream;
           setHasPermission(true);
           setIsScanning(true);
+          console.log('Camera stream started');
         }
       } catch (err) {
         const errorMessage = err instanceof Error ? err.message : 'Unable to access camera';
         setError(errorMessage);
         setHasPermission(false);
+        console.error('Camera error:', errorMessage);
       }
     };
 
@@ -74,7 +87,7 @@ export function QRScanner({ isOpen, onClose, onScan }: QRScannerProps) {
 
   // Scan for QR codes
   useEffect(() => {
-    if (!isScanning || !videoRef.current || !canvasRef.current || !window.QRCode) return;
+    if (!isScanning || !videoRef.current || !canvasRef.current || !window.jsQR) return;
 
     scanIntervalRef.current = setInterval(() => {
       const canvas = canvasRef.current;
@@ -94,9 +107,11 @@ export function QRScanner({ isOpen, onClose, onScan }: QRScannerProps) {
       const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
 
       try {
-        const code = window.QRCode.decode(imageData);
-        if (code) {
-          handleScanSuccess(code);
+        if (window.jsQR) {
+          const code = window.jsQR(imageData.data, imageData.width, imageData.height);
+          if (code && code.data) {
+            handleScanSuccess(code.data);
+          }
         }
       } catch (e) {
         // No QR code found in frame, continue scanning

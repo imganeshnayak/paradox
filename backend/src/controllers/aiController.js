@@ -1,26 +1,25 @@
-const { GoogleGenerativeAI } = require('@google/generative-ai');
+require('dotenv').config();
+const { GoogleGenAI } = require('@google/genai');
 
-// Load Gemini API key from env
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
-
-// Initialize Gemini client
-const genAI = GEMINI_API_KEY ? new GoogleGenerativeAI(GEMINI_API_KEY) : null;
+const ai = new GoogleGenAI({ apiKey: GEMINI_API_KEY });
 
 exports.chat = async (req, res) => {
-  if (!genAI) {
+  if (!GEMINI_API_KEY) {
     return res.status(500).json({ error: 'Gemini API key not configured.' });
   }
-  const { message, history } = req.body;
+  const { message } = req.body;
   if (!message) {
     return res.status(400).json({ error: 'Missing message in request body.' });
   }
   try {
-    const model = genAI.getGenerativeModel({ model: 'gemini-pro' });
-    const chat = model.startChat({ history: history || [] });
-    const result = await chat.sendMessage(message);
-    const response = await result.response;
-    const text = response.text();
-    res.json({ reply: text });
+    // Use the Gemini 2.5 Flash model for content generation
+    const result = await ai.models.generateContent({
+      model: 'gemini-2.5-flash',
+      contents: message,
+    });
+    // The SDK returns the text directly
+    res.json({ reply: result.text });
   } catch (err) {
     console.error('Gemini AI chat error:', err);
     res.status(500).json({ error: 'Failed to get AI response.' });

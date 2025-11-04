@@ -84,6 +84,10 @@ export function ArtworkChatbot({ artwork, language }: ArtworkChatbotProps) {
     setIsLoading(true)
 
     try {
+      // Build prompt with artwork context and user question
+      const artworkContext = `Artwork details:\nTitle: ${artwork.title}\nArtist: ${artwork.artist}\nYear: ${artwork.year}\nDescription: ${artwork.description}\nStory: ${artwork.story}\nMedium: ${artwork.medium}\nPeriod: ${artwork.period}`;
+      const prompt = `${artworkContext}\n\nUser question: ${inputValue}`;
+
       // Call backend API to get AI response
       const backendUrl = getBackendUrl()
       const response = await fetch(`${backendUrl}/api/ai-chat`, {
@@ -92,17 +96,7 @@ export function ArtworkChatbot({ artwork, language }: ArtworkChatbotProps) {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          question: inputValue,
-          artwork: {
-            title: artwork.title,
-            artist: artwork.artist,
-            year: artwork.year,
-            description: artwork.description,
-            story: artwork.story,
-            medium: artwork.medium,
-            period: artwork.period
-          },
-          language: language
+          message: prompt
         })
       })
 
@@ -110,7 +104,7 @@ export function ArtworkChatbot({ artwork, language }: ArtworkChatbotProps) {
 
       const botMessage: Message = {
         id: (Date.now() + 1).toString(),
-        text: data.answer || 'Sorry, I could not generate a response.',
+        text: data.reply || data.answer || 'Sorry, I could not generate a response.',
         sender: 'bot',
         timestamp: new Date()
       }

@@ -22,22 +22,23 @@ export async function translateText(text: string, targetLanguage: string): Promi
     console.log(`[Translation] Requesting translation to ${targetLanguage}: "${text.substring(0, 50)}..."`)
     
     // Call backend translation API
-    const response = await fetch('/api/translate', {
+    const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:5000'
+    const response = await fetch(`${backendUrl}/api/translate`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
         text,
-        targetLanguage
+        target: targetLanguage
       })
     })
 
     if (response.ok) {
       const data = await response.json()
-      console.log(`[Translation] Success via ${data.provider || 'unknown'}: "${data.translatedText.substring(0, 50)}..."`)
-      translationCache[cacheKey] = data.translatedText
-      return data.translatedText
+      console.log(`[Translation] Success via ${data.provider || 'unknown'}: "${data.translated.substring(0, 50)}..."`)
+      translationCache[cacheKey] = data.translated
+      return data.translated
     } else {
       console.error(`[Translation] API error: ${response.status} ${response.statusText}`)
     }

@@ -27,7 +27,6 @@ app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
-// Routes
 app.use('/api/analytics', require('./routes/analytics'));
 app.use('/api/artworks', require('./routes/artworks'));
 app.use('/api/sessions', require('./routes/sessions'));
@@ -36,6 +35,7 @@ app.use('/api/reviews', require('./routes/reviews'));
 app.use('/api/feedback', require('./routes/feedback'));
 app.use('/api/images', require('./routes/images'));
 app.use('/api', require('./routes/ai'));
+app.use('/api/translate', require('./routes/translate'));
 
 // Error handling middleware
 app.use((err, req, res, next) => {

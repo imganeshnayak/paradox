@@ -7,10 +7,12 @@ NEXT_PUBLIC_BACKEND_URL = "https://paradox-wygi.onrender.com"
 NEXT_PUBLIC_API_URL = "https://paradox-wygi.onrender.com/api"
 
 [[redirects]]
+
+# SPA fallback for client-side routing (dynamic routes)
+[[redirects]]
 from = "/*"
 to = "/index.html"
 status = 200
-conditions = { Status = [404] }
 
 [context.production.environment]
 NEXT_PUBLIC_BACKEND_URL = "https://paradox-wygi.onrender.com"

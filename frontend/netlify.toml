@@ -1,14 +1,17 @@
-
-
 [build]
 command = "npm run build"
-publish = ".next"
+publish = ".next/standalone"  # ✅ not just ".next"
 
 [build.environment]
 NEXT_PUBLIC_BACKEND_URL = "https://paradox-wygi.onrender.com"
 NEXT_PUBLIC_API_URL = "https://paradox-wygi.onrender.com/api"
 
 [[plugins]]
-package = "@netlify/plugin-nextjs"
-[build]
+package = "@netlify/plugin-nextjs"  # ✅ keep this — required for Next.js runtime
+
+# Optional: proxy API requests to your Render backend
 [[redirects]]
+from = "/api/*"
+to = "https://paradox-wygi.onrender.com/api/:splat"
+status = 200
+force = true

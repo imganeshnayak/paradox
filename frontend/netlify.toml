@@ -1,25 +1,16 @@
 [build]
 command = "npm run build"
-publish = ".next/standalone"
+publish = ".next"
 
-[[plugins]]
-package = "@netlify/plugin-nextjs"
-
-[[redirects]]
-from = "/api/*"
-to = "https://paradox-wygi.onrender.com/api/:splat"
-status = 200
-force = true
+[build.environment]
+NEXT_PUBLIC_BACKEND_URL = "https://paradox-wygi.onrender.com"
+NEXT_PUBLIC_API_URL = "https://paradox-wygi.onrender.com/api"
 
 [[redirects]]
 from = "/*"
 to = "/index.html"
 status = 200
 conditions = { Status = [404] }
-
-[build.environment]
-NEXT_PUBLIC_BACKEND_URL = "https://paradox-wygi.onrender.com"
-NEXT_PUBLIC_API_URL = "https://paradox-wygi.onrender.com/api"
 
 [context.production.environment]
 NEXT_PUBLIC_BACKEND_URL = "https://paradox-wygi.onrender.com"

@@ -10,17 +10,5 @@ NEXT_PUBLIC_API_URL = "https://paradox-wygi.onrender.com/api"
 
 [[plugins]]
 package = "@netlify/plugin-nextjs"
-
+[build]
 [[redirects]]
-from = "/*"
-to = "/index.html"
-status = 200
-
-[build.environment]
-NEXT_PUBLIC_BACKEND_URL = "https://paradox-wygi.onrender.com"
-NEXT_PUBLIC_API_URL = "https://paradox-wygi.onrender.com/api"
-
-[[redirects]]
-from = "/*"
-to = "/index.html"
-status = 200

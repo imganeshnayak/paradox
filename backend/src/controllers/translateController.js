@@ -11,6 +11,13 @@ exports.translate = async (req, res) => {
     return res.status(400).json({ error: 'Missing text or target language.' });
   }
 
+  console.log('🔧 Translation Debug:', {
+    hasOpenRouterKey: !!OPENROUTER_API_KEY,
+    hasGeminiKey: !!GEMINI_API_KEY,
+    targetLanguage: target,
+    model: OPENROUTER_MODEL
+  });
+
   let translated = null;
   let usedProvider = 'unknown';
 
@@ -55,7 +62,7 @@ exports.translate = async (req, res) => {
   // Fallback to Gemini if OpenRouter fails
   if (!translated && genAI) {
     try {
-      const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
+      const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash' });
       const prompt = `Translate the following text to ${target} (just the translation, no explanation):\n"""${text}"""`;
       const result = await model.generateContent(prompt);
       const response = await result.response;
@@ -69,5 +76,6 @@ exports.translate = async (req, res) => {
   }
 
   // If both providers fail
+  console.error('❌ Both translation providers failed');
   res.status(500).json({ error: 'Failed to translate text from any provider.' });
 };

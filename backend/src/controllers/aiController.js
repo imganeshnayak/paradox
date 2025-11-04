@@ -11,6 +11,12 @@ exports.chat = async (req, res) => {
     return res.status(400).json({ error: 'Missing message in request body.' });
   }
 
+  console.log('🔧 AI Chat Debug:', {
+    hasOpenRouterKey: !!OPENROUTER_API_KEY,
+    hasGeminiKey: !!GEMINI_API_KEY,
+    model: OPENROUTER_MODEL
+  });
+
   let reply = null;
   let usedProvider = 'unknown';
 
@@ -53,7 +59,7 @@ exports.chat = async (req, res) => {
   // Fallback to Gemini if OpenRouter fails
   if (!reply && genAI) {
     try {
-      const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
+      const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash' });
       const result = await model.generateContent(message);
       const response = await result.response;
       reply = response.text();
@@ -66,5 +72,6 @@ exports.chat = async (req, res) => {
   }
 
   // If both providers fail
+  console.error('❌ Both AI providers failed');
   res.status(500).json({ error: 'Failed to get AI response from any provider.' });
 };

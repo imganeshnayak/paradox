@@ -1,27 +1,24 @@
 /**
  * Gemini Image Recognition Utility
- * Uses Google's Gemini API to identify artworks from images
+ * Uses OpenRouter (primary) and Gemini (fallback) for artwork image analysis
  */
 
-const axios = require('axios');
+const { GoogleGenerativeAI } = require('@google/generative-ai');
 
+const OPENROUTER_API_KEY = process.env.OPENROUTER_API_KEY;
+const OPENROUTER_VISION_MODEL = process.env.OPENROUTER_VISION_MODEL || 'meta-llama/llava-1.5-7b-hf';
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
-const GEMINI_API_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent';
+const genAI = GEMINI_API_KEY ? new GoogleGenerativeAI(GEMINI_API_KEY) : null;
 
 /**
- * Analyze artwork image using Gemini API
+ * Analyze artwork image using OpenRouter or Gemini
  * Extracts: title, artist, style, period, description
  * 
  * @param {string} base64Image - Base64 encoded image
  * @returns {Promise<Object>} - Artwork metadata { title, artist, style, period, description }
  */
 async function analyzeArtworkImage(base64Image) {
-  try {
-    if (!GEMINI_API_KEY) {
-      throw new Error('GEMINI_API_KEY not configured in environment');
-    }
-
-    const prompt = `Analyze this artwork image and extract the following information in JSON format:
+  const prompt = `Analyze this artwork image and extract the following information in JSON format:
 {
   "title": "artwork title or 'Unknown' if not identifiable",
   "artist": "artist name or 'Unknown'",
@@ -35,69 +32,128 @@ If you recognize a famous artwork (like Mona Lisa, Starry Night, etc), use the a
 If it's a generic artwork or not identifiable, provide descriptive keywords.
 Respond ONLY with valid JSON, no additional text.`;
 
-    const response = await axios.post(
-      `${GEMINI_API_URL}?key=${GEMINI_API_KEY}`,
-      {
-        contents: [
-          {
-            parts: [
-              {
-                text: prompt,
-              },
-              {
-                inlineData: {
-                  mimeType: 'image/jpeg',
-                  data: base64Image, // Base64 without 'data:image/jpeg;base64,' prefix
-                },
-              },
-            ],
-          },
-        ],
-      },
-      {
-        timeout: 30000,
+  let metadata = null;
+  let usedProvider = 'unknown';
+
+  // Try OpenRouter first (primary provider for vision)
+  if (OPENROUTER_API_KEY) {
+    try {
+      console.log('🔄 Attempting image analysis via OpenRouter...');
+      
+      const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${OPENROUTER_API_KEY}`,
+          'Content-Type': 'application/json',
+          'HTTP-Referer': 'https://paradox-wygi.onrender.com',
+          'X-Title': 'Museum Image Recognition',
+        },
+        body: JSON.stringify({
+          model: OPENROUTER_VISION_MODEL,
+          messages: [
+            {
+              role: 'user',
+              content: [
+                { type: 'text', text: prompt },
+                { type: 'image_url', image_url: { url: `data:image/jpeg;base64,${base64Image}` } }
+              ]
+            }
+          ],
+          temperature: 0.7,
+          max_tokens: 500,
+        }),
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        const responseText = result?.choices?.[0]?.message?.content?.trim() || null;
+        
+        if (responseText) {
+          console.log(`\n📝 RAW OPENROUTER RESPONSE:\n${responseText}\n`);
+          
+          // Extract JSON from markdown code blocks if present
+          let jsonText = responseText;
+          const jsonMatch = responseText.match(/```(?:json)?\s*([\s\S]*?)```/);
+          if (jsonMatch) {
+            jsonText = jsonMatch[1].trim();
+          }
+          
+          metadata = JSON.parse(jsonText);
+          usedProvider = 'openrouter';
+          console.log('✅ Image analysis via OpenRouter successful');
+        }
+      } else {
+        const errorText = await response.text();
+        console.warn('OpenRouter vision API error:', response.statusText, errorText);
       }
-    );
-
-    // Extract text response from Gemini
-    if (!response.data?.candidates?.[0]?.content?.parts?.[0]?.text) {
-      throw new Error('Invalid Gemini API response');
+    } catch (openRouterError) {
+      console.warn('OpenRouter image analysis failed, trying Gemini...', openRouterError.message);
     }
-
-    const responseText = response.data.candidates[0].content.parts[0].text;
-    
-    console.log(`\n📝 RAW GEMINI RESPONSE:\n${responseText}\n`);
-    
-    // Parse JSON response
-    let metadata = JSON.parse(responseText);
-    
-    console.log(`\n✅ PARSED METADATA FROM GEMINI:`);
-    console.log('─'.repeat(50));
-    console.log(`  Title:       ${metadata.title}`);
-    console.log(`  Artist:      ${metadata.artist}`);
-    console.log(`  Style:       ${metadata.style}`);
-    console.log(`  Period:      ${metadata.period}`);
-    console.log(`  Description: ${metadata.description}`);
-    console.log(`  Confidence:  ${metadata.confidence}`);
-    console.log('─'.repeat(50) + `\n`);
-    
-    // Ensure all required fields exist
-    metadata = {
-      title: metadata.title || 'Unknown Artwork',
-      artist: metadata.artist || 'Unknown Artist',
-      style: metadata.style || 'Contemporary',
-      period: metadata.period || 'Modern',
-      description: metadata.description || 'An artwork',
-      confidence: metadata.confidence || 'medium',
-    };
-
-    console.log(`✅ Gemini Analysis Complete: ${metadata.title} by ${metadata.artist}`);
-    console.log(`🎯 Confidence Level: ${metadata.confidence}\n`);
-    return metadata;
-  } catch (error) {
-    console.error('❌ Gemini Image Analysis Error:', error.message);
-    throw new Error(`Image analysis failed: ${error.message}`);
   }
+
+  // Fallback to Gemini if OpenRouter fails or not configured
+  if (!metadata && genAI && GEMINI_API_KEY) {
+    try {
+      console.log('🔄 Attempting image analysis via Gemini (fallback)...');
+      
+      const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash' });
+      
+      const imagePart = {
+        inlineData: {
+          data: base64Image,
+          mimeType: 'image/jpeg',
+        },
+      };
+
+      const result = await model.generateContent([prompt, imagePart]);
+      const response = await result.response;
+      const responseText = response.text();
+      
+      console.log(`\n📝 RAW GEMINI RESPONSE:\n${responseText}\n`);
+      
+      // Extract JSON from markdown code blocks if present
+      let jsonText = responseText;
+      const jsonMatch = responseText.match(/```(?:json)?\s*([\s\S]*?)```/);
+      if (jsonMatch) {
+        jsonText = jsonMatch[1].trim();
+      }
+      
+      metadata = JSON.parse(jsonText);
+      usedProvider = 'gemini';
+      console.log('✅ Image analysis via Gemini successful');
+    } catch (geminiError) {
+      console.error('❌ Gemini Image Analysis Error:', geminiError.message);
+      throw new Error(`Image analysis failed: ${geminiError.message}`);
+    }
+  }
+
+  if (!metadata) {
+    throw new Error('No image analysis provider available (OpenRouter and Gemini both failed or not configured)');
+  }
+
+  console.log(`\n✅ PARSED METADATA FROM ${usedProvider.toUpperCase()}:`);
+  console.log('─'.repeat(50));
+  console.log(`  Title:       ${metadata.title}`);
+  console.log(`  Artist:      ${metadata.artist}`);
+  console.log(`  Style:       ${metadata.style}`);
+  console.log(`  Period:      ${metadata.period}`);
+  console.log(`  Description: ${metadata.description}`);
+  console.log(`  Confidence:  ${metadata.confidence}`);
+  console.log('─'.repeat(50) + `\n`);
+  
+  // Ensure all required fields exist
+  metadata = {
+    title: metadata.title || 'Unknown Artwork',
+    artist: metadata.artist || 'Unknown Artist',
+    style: metadata.style || 'Contemporary',
+    period: metadata.period || 'Modern',
+    description: metadata.description || 'An artwork',
+    confidence: metadata.confidence || 'medium',
+  };
+
+  console.log(`✅ Analysis Complete (${usedProvider}): ${metadata.title} by ${metadata.artist}`);
+  console.log(`🎯 Confidence Level: ${metadata.confidence}\n`);
+  return metadata;
 }
 
 /**
@@ -135,10 +191,10 @@ function findMatchingArtworks(metadata, artworks) {
   const scored = artworks.map(artwork => {
     let score = 0;
 
-    const artworkTitle = artwork.title.toLowerCase();
-    const artworkArtist = artwork.artist.toLowerCase();
-    const artworkDescription = artwork.description.toLowerCase();
-    const artworkPeriod = artwork.period.toLowerCase();
+    const artworkTitle = (artwork.title || '').toLowerCase();
+    const artworkArtist = (artwork.artist || '').toLowerCase();
+    const artworkDescription = (artwork.description || '').toLowerCase();
+    const artworkPeriod = (artwork.period || '').toLowerCase();
 
     // Exact title match (highest score)
     if (artworkTitle === title.toLowerCase()) {

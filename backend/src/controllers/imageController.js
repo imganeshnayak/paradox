@@ -113,18 +113,33 @@ async function recognizeArtwork(req, res) {
 }
 
 /**
- * Get all artworks
- * TODO: Replace with database query
+ * Get all artworks from MongoDB database
  */
 async function getAllArtworks() {
   try {
-    // This will be connected to MongoDB later
-    // For now, return sample data
-    const { SAMPLE_ARTWORKS } = require('../models/Artwork');
-    return Object.values(SAMPLE_ARTWORKS || {});
+    const { getDatabase } = require('../config/database');
+    const db = getDatabase();
+    
+    if (!db) {
+      console.warn('Database not initialized, using fallback sample data');
+      const { SAMPLE_ARTWORKS } = require('../models/Artwork');
+      return Object.values(SAMPLE_ARTWORKS || {});
+    }
+    
+    const artworks = await db.collection('artworks').find({}).toArray();
+    console.log(`✅ Fetched ${artworks.length} artworks from database`);
+    return artworks;
   } catch (error) {
-    console.error('Error fetching artworks:', error);
-    return [];
+    console.error('Error fetching artworks from database:', error);
+    // Fallback to sample data if database fails
+    try {
+      const { SAMPLE_ARTWORKS } = require('../models/Artwork');
+      console.warn('Using fallback sample data');
+      return Object.values(SAMPLE_ARTWORKS || {});
+    } catch (fallbackError) {
+      console.error('Fallback to sample data also failed:', fallbackError);
+      return [];
+    }
   }
 }
 

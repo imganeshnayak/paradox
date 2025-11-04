@@ -88,8 +88,11 @@ export default function UploadArtworkPage() {
         throw new Error("Admin token not found. Please log in again.")
       }
 
+      // Get backend URL
+      const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:5000'
+
       // Send to backend
-      const response = await fetch("/api/admin/artwork-upload", {
+      const response = await fetch(`${backendUrl}/api/admin/artwork-upload`, {
         method: "POST",
         headers: {
           'Authorization': `Bearer ${token}`,

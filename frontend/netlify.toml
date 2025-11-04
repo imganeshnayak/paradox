@@ -1,6 +1,6 @@
 [build]
 command = "npm run build"
-publish = ".next/standalone"  # ✅ not just ".next"
+publish = ".next"
 
 [build.environment]
 NEXT_PUBLIC_BACKEND_URL = "https://paradox-wygi.onrender.com"

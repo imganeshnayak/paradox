@@ -47,9 +47,20 @@ class ApiClient {
       }
 
       const data = await response.json();
+      
+      // Handle responses that are already in the correct format
+      if (data.success !== undefined) {
+        return {
+          success: true,
+          data: data as T,
+          timestamp: Date.now(),
+        };
+      }
+      
+      // Handle responses with 'data' wrapper
       return {
         success: true,
-        data: data.data,
+        data: data.data as T,
         timestamp: Date.now(),
       };
     } catch (error) {
@@ -84,9 +95,21 @@ class ApiClient {
       }
 
       const data = await response.json();
+      
+      // Handle responses that are already in the correct format
+      // (i.e., they have 'success' field directly, not wrapped in 'data')
+      if (data.success !== undefined) {
+        return {
+          success: true,
+          data: data as T,
+          timestamp: Date.now(),
+        };
+      }
+      
+      // Handle responses with 'data' wrapper
       return {
         success: true,
-        data: data.data,
+        data: data.data as T,
         timestamp: Date.now(),
       };
     } catch (error) {
@@ -121,9 +144,20 @@ class ApiClient {
       }
 
       const data = await response.json();
+      
+      // Handle responses that are already in the correct format
+      if (data.success !== undefined) {
+        return {
+          success: true,
+          data: data as T,
+          timestamp: Date.now(),
+        };
+      }
+      
+      // Handle responses with 'data' wrapper
       return {
         success: true,
-        data: data.data,
+        data: data.data as T,
         timestamp: Date.now(),
       };
     } catch (error) {
@@ -153,9 +187,20 @@ class ApiClient {
       }
 
       const data = await response.json();
+      
+      // Handle responses that are already in the correct format
+      if (data.success !== undefined) {
+        return {
+          success: true,
+          data: data as T,
+          timestamp: Date.now(),
+        };
+      }
+      
+      // Handle responses with 'data' wrapper
       return {
         success: true,
-        data: data.data,
+        data: data.data as T,
         timestamp: Date.now(),
       };
     } catch (error) {

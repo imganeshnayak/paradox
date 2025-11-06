@@ -216,7 +216,7 @@ function findMatchingArtworks(metadata, artworks) {
     }
 
     // Period/Style match
-    if (artworkPeriod.includes(style.toLowerCase()) || artworkPeriod.includes(period?.toLowerCase() || '')) {
+    if (artworkPeriod.includes(style.toLowerCase()) || artworkPeriod.includes(metadata.period?.toLowerCase() || '')) {
       score += 30;
     }
 

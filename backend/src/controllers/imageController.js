@@ -58,12 +58,18 @@ async function recognizeArtwork(req, res) {
     // Find matching artworks
     const matches = findMatchingArtworks(metadata, artworks);
 
+    // Ensure matches have proper ID fields
+    const processedMatches = matches.map(match => ({
+      ...match,
+      id: match._id || match.id,
+    }));
+
     console.log(`\n🎯 SEARCH RESULTS`);
     console.log(`${'='.repeat(60)}`);
-    console.log(`✅ Matches found: ${matches.length}`);
+    console.log(`✅ Matches found: ${processedMatches.length}`);
     
-    if (matches.length > 0) {
-      matches.slice(0, 3).forEach((match, index) => {
+    if (processedMatches.length > 0) {
+      processedMatches.slice(0, 3).forEach((match, index) => {
         console.log(`\n   Match #${index + 1}:`);
         console.log(`   ├─ Title: ${match.title}`);
         console.log(`   ├─ Artist: ${match.artist}`);
@@ -73,7 +79,7 @@ async function recognizeArtwork(req, res) {
     }
     console.log(`\n${'='.repeat(60)}\n`);
 
-    if (matches.length === 0) {
+    if (processedMatches.length === 0) {
       return res.status(404).json({
         error: 'No matching artwork found',
         metadata,
@@ -82,7 +88,7 @@ async function recognizeArtwork(req, res) {
     }
 
     // Return top match with metadata
-    const topMatch = matches[0];
+    const topMatch = processedMatches[0];
 
     console.log(`✨ RETURNING TOP MATCH TO FRONTEND`);
     console.log(`   Title: ${topMatch.title}`);
@@ -95,7 +101,7 @@ async function recognizeArtwork(req, res) {
       success: true,
       artwork: topMatch,
       metadata,
-      allMatches: matches,
+      allMatches: processedMatches,
       matchScore: topMatch.matchScore,
     });
   } catch (error) {
